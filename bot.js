@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer-extra');
 const Visits = require('./db/visits')
 const Settings = require('./db/settings');
 const moment = require('moment');
-
+const c = require('./constants/crowdworks.jp.cookies.json')
 const bot = async () => {
 
   const webBid = await Settings.findOne({ type: 'web' })
@@ -27,7 +27,7 @@ const bot = async () => {
   });
   try {
     const page = await browser.newPage();
-    await page.setCookie(...cookie)
+    await page.setCookie(...c)
 
     await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1', { timeout: 60000 });
     await page.waitForSelector('.jobs_lists.jobs_lists_simple', { timeout: 60000 })
