@@ -29,7 +29,8 @@ const bot = async () => {
     const page = await browser.newPage();
     await page.setCookie(...cookie)
 
-    await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1', { timeout: 60000 });
+    // await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1', { timeout: 60000 });
+    await page.goto('https://crowdworks.jp/public/jobs/search?category_id=242&keep_search_criteria=true&order=new&hide_expired=true&page=1', { timeout: 60000 });
     await page.waitForSelector('.jobs_lists.jobs_lists_simple', { timeout: 60000 })
     const data = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .item_title a[href]'),
@@ -124,9 +125,11 @@ const bot = async () => {
           }
 
           if (type == '固定報酬制')
-            await setProposalValues(page, `#amount_dummy_`, budgetValue.toString(), `.message-body.message_body_for_reply.cw-form_control`, webBid.sentence)
+            await setProposalValues(page, `#amount_dummy_`, budgetValue.toString(),
+              `.message-body.message_body_for_reply.cw-form_control`, mobileBid.sentence)
           else
-            await setProposalValues(page, `#hourly_wage_dummy_`, budgetValue.toString(), `.message-body.message_body_for_reply.cw-form_control`, webBid.sentence)
+            await setProposalValues(page, `#hourly_wage_dummy_`, budgetValue.toString(),
+              `.message-body.message_body_for_reply.cw-form_control`, mobileBid.sentence)
           await new Promise((resolve) => {
             setTimeout(() => {
               resolve();
