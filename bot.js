@@ -9,7 +9,7 @@ const bot = async () => {
   const mobileBid = await Settings.findOne({ type: 'app' })
   const ecBid = await Settings.findOne({ type: 'ec' })
   var cookie = await Settings.findOne({ type: 'json' })
-  cookie = JSON.parse(cookie)
+  cookie = JSON.parse(cookie.sentence)
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -27,7 +27,7 @@ const bot = async () => {
   });
   try {
     const page = await browser.newPage();
-    await page.setCookie(...c)
+    await page.setCookie(...cookie)
 
     await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1', { timeout: 60000 });
     await page.waitForSelector('.jobs_lists.jobs_lists_simple', { timeout: 60000 })
