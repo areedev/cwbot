@@ -1,5 +1,7 @@
 var Visits = require('../db/visits')
 var Settings = require('../db/settings')
+const { bot } = require('../bot')
+
 var interval;
 
 const index = (req, res) => {
@@ -49,7 +51,7 @@ const start = async (req, res) => {
     interval = setInterval(() => {
       bot()
       console.log('interval')
-    }, 1000)
+    }, 3600000)
     res.status(200).send('running')
   } catch (e) {
     console.log(e)
