@@ -47,7 +47,7 @@ const start = async (req, res) => {
     running.sentence = 'running'
     await running.save()
     interval = setInterval(() => {
-      // bot()
+      bot()
       console.log('interval')
     }, 1000)
     res.status(200).send('running')
