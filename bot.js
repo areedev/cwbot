@@ -143,12 +143,12 @@ const bot = async () => {
               }, 2000);
             })
             await Visits.create({ link, time: Date.now() })
-            cnt--
           }
         } catch (e) {
           // await Visits.create({ link, time: Date.now() })
           console.log(e)
         }
+        cnt--
       }
     } catch (e) {
       console.log(e)
