@@ -51,7 +51,7 @@ const start = async (req, res) => {
     bot()
     interval = setInterval(() => {
       bot()
-    }, 10800000)
+    }, 3600000)
     res.status(200).send('running')
   } catch (e) {
     console.log(e)
