@@ -35,6 +35,7 @@ const bot = async () => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .item_title a[href]'),
         a => a.getAttribute('href').substring(a.getAttribute('href').lastIndexOf('/') + 1))
     });
+    console.log(`${data.length} links fetched...`)
     for (var jobid of data) {
       try {
         link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobid
@@ -60,7 +61,6 @@ const bot = async () => {
             return Array.from(document.querySelectorAll('.job_offer-conditions .condition_body'),
               e => e.innerHTML.trim())
           });
-          console.log(conds)
           const type = conds[0]
           const budget = conds[1]
           const desc = await page.evaluate(() => {

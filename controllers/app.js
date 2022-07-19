@@ -48,10 +48,10 @@ const start = async (req, res) => {
     if (running.sentence == 'running') return res.status(200).send('running')
     running.sentence = 'running'
     await running.save()
+    bot()
     interval = setInterval(() => {
       bot()
-      console.log('interval')
-    }, 3600000)
+    }, 10800000)
     res.status(200).send('running')
   } catch (e) {
     console.log(e)
