@@ -5,4 +5,4 @@ var schema = mongoose.Schema({
   type: { type: String, default: '' }
 });
 
-module.exports = mongoose.model('bids', schema);
+module.exports = mongoose.model('settings', schema);

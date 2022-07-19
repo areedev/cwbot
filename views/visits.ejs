@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+
+<head>
+  <title>CWB - Visits</title>
+  <link href="/css/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  <div class="main-content">
+    <div class="visits">
+      <p class="info"></p>
+      <div class="links"></div>
+      <button class='button viewmore'>View More</button>
+    </div>
+
+  </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var limit = 10;
+    var page = 0;
+    document.querySelector('.button.viewmore').addEventListener('click', viewMore)
+    loadVisits()
+    function viewMore() {
+      page++
+      loadVisits()
+    }
+    function loadVisits() {
+      $.get(`/api/visits/${limit}/${page}`, function (data, status) {
+        const { visits, count } = data
+        var html = ''
+        for (var visit of visits) {
+          html += `<a href='${visit.link}' class='job-link'>${visit.link}</a>`
+        }
+        html += ``
+        document.querySelector('.main-content .visits .links').innerHTML += html
+        document.querySelector('.main-content .info').innerHTML = `${count} links were visited`
+      });
+    }
+
+    
+  });
+</script>

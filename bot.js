@@ -1,61 +1,58 @@
 const puppeteer = require('puppeteer-extra');
-const cookie = require('./constants/crowdworks.jp.cookies.json')
 const Visits = require('./db/visits')
-const Bids = require('./db/bids');
+const Settings = require('./db/settings');
 const moment = require('moment');
-const auto = async () => {
-  await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1');
-  await page.waitForNavigation('networkidle2')
-  await page.waitForSelector('.jobs_lists.jobs_lists_simple')
-  var lis
-  const data = await page.evaluate(() => {
-    lis = Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple li'))
-    return lis.map(td => td.textContent)
-  });
-  console.log(lis.length)
 
-}
 const bot = async () => {
 
-  const webBid = await Bids.findOne({ type: 'web' })
-  const mobileBid = await Bids.findOne({ type: 'mobile' })
-  const ecBid = await Bids.findOne({ type: 'ec' })
+  const webBid = await Settings.findOne({ type: 'web' })
+  const mobileBid = await Settings.findOne({ type: 'app' })
+  const ecBid = await Settings.findOne({ type: 'ec' })
+  var cookie = await Settings.findOne({ type: 'json' })
+  cookie = JSON.parse(cookie)
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
-    args: ['--start-maximized']
-    // headless: true,
-    // devtools: false,
-    // args: [
-    //   '--disable-gpu',
-    //   '--disable-dev-shm-usage',
-    //   '--no-sandbox',
-    //   '--disable-setuid-sandbox',
-    //   '--ignore-certificate-errors',
-    //   '--ignore-certificate-errors-spki-list'
-    // ]
+    args: ['--start-maximized'],
+    headless: true,
+    devtools: false,
+    args: [
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--ignore-certificate-errors',
+      '--ignore-certificate-errors-spki-list'
+    ]
   });
   try {
     const page = await browser.newPage();
     await page.setCookie(...cookie)
 
-    await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1',);
+    await page.goto('https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1', { timeout: 60000 });
     await page.waitForSelector('.jobs_lists.jobs_lists_simple', { timeout: 60000 })
     const data = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .item_title a[href]'),
         a => a.getAttribute('href').substring(a.getAttribute('href').lastIndexOf('/') + 1))
     });
-    for (var link of data) {
+    for (var jobid of data) {
       try {
-        link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + link
+        link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobid
         console.log(link)
 
         const visited = await Visits.findOne({ link })
+        const status = await Settings.findOne({ type: 'status' })
+        if (status.sentence == 'stopped') break
         if (!visited) {
           await page.goto(link)
           const url = await page.evaluate(() => document.location.href);
           if (url.indexOf('competition') > -1) {
             await Visits.create({ link, time: Date.now() })
+            console.log("Competition...")
+            continue
+          } else if (url.indexOf('proposals/') > -1 && url.indexOf('proposals/new?job_offer_id') < 0) {
+            await Visits.create({ link, time: Date.now() })
+            console.log("Already applied...")
             continue
           }
           await page.waitForSelector('.job_offer-conditions', { timeout: 60000 })
@@ -82,18 +79,18 @@ const bot = async () => {
               // if under 5000
               if (budget.indexOf('〜  5,000円') > -1) budgetValue = 4000
               // if 5000 ~  10000
-              if (budget.indexOf('5,000円  〜  10,000円') > -1) budgetValue = 8000
+              else if (budget.indexOf('5,000円  〜  10,000円') > -1) budgetValue = 8000
               // if 10000 ~ 50000 
-              if (budget.indexOf('10,000円  〜  50,000円') > -1) budgetValue = 40000
+              else if (budget.indexOf('10,000円  〜  50,000円') > -1) budgetValue = 40000
               // if 50000 ~ 100000 
-              if (budget.indexOf('50,000円  〜  100,000円') > -1) budgetValue = 80000
+              else if (budget.indexOf('50,000円  〜  100,000円') > -1) budgetValue = 80000
               // if 100000 ~ 2000000 
-              if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 260000
+              else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 260000
               // if 300000 ~ 5000000 
-              if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 450000
+              else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 450000
               // if 500000 ~ 10000000 
-              if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 800000
-              else budgetValue = 2000000
+              else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 800000
+              else budgetValue = 200000
             } else if (type == '時間単価制') {
               budgetValue = 3000
             }
@@ -117,7 +114,8 @@ const bot = async () => {
             await page.waitForSelector(selector1);
             await page.click(selector1);
             await page.evaluate((data) => {
-              return document.querySelector(data.selector).value = data.value
+              document.querySelector(data.selector).value = data.value
+              // document.querySelector(data.selector).press('Enter')
             }, { selector: selector1, value: value1 })
             await page.waitForSelector(selector2);
             await page.evaluate((data) => {
@@ -143,7 +141,7 @@ const bot = async () => {
               resolve();
             }, 3000);
           })
-          // await sendBtn.click()
+          await sendBtn.click()
           await new Promise((resolve) => {
             setTimeout(() => {
               resolve();
@@ -152,7 +150,7 @@ const bot = async () => {
           await Visits.create({ link, time: Date.now() })
         }
       } catch (e) {
-        await Visits.create({ link, time: Date.now() })
+        // await Visits.create({ link, time: Date.now() })
         console.log(e)
       }
     }
