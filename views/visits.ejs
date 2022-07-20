@@ -16,6 +16,9 @@
   </div>
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" crossorigin="anonymous"
+  referrerpolicy="no-referrer"></script>
+
 <script>
   $(document).ready(function () {
     var limit = 10;
@@ -31,7 +34,8 @@
         const { visits, count } = data
         var html = ''
         for (var visit of visits) {
-          html += `<a href='${visit.link}' class='job-link'>${visit.link}</a>`
+          html += `<a href='${visit.link}' class='job-link'>${visit.link} - <span class='time'>
+             ${moment(visit.time).format('YYYY-MM-DD hh:mm:ss')}</span></a>`
         }
         html += ``
         document.querySelector('.main-content .visits .links').innerHTML += html
@@ -39,6 +43,6 @@
       });
     }
 
-    
+
   });
 </script>

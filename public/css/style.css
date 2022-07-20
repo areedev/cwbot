@@ -67,6 +67,9 @@ body {
   color: #222;
   line-height: 2;
 }
+.main-content .visits .links .job-link .time {
+  color: rgb(245, 167, 0);
+}
 .main-content .visits .links .job-link:hover {
   color: #888;
 }

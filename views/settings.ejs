@@ -25,6 +25,7 @@
         <button class='button start'>Start</button>
         <button class='button stop'>Stop</button>
       </div>
+      <p class="time-notice"></p>
     </div>
   </div>
 </body>
@@ -69,7 +70,7 @@
     }
     function loadSettings() {
       $.get(`/api/settings`, function (data, status) {
-        const { settings } = data
+        var { settings, remainedTime } = data
         web = settings.find(e => e.type == 'web').sentence
         app = settings.find(e => e.type == 'app').sentence
         ec = settings.find(e => e.type == 'ec').sentence
@@ -79,6 +80,11 @@
         document.querySelector('.settings .bids .app').innerHTML = app
         document.querySelector('.settings .bids .ec').innerHTML = ec
         document.querySelector('.settings .cookie .json').innerHTML = json
+
+        const hours = Math.floor(remainedTime / 3600)
+        const mins = Math.floor((remainedTime - hours * 3600) / 60)
+        const seconds = remainedTime - hours * 3600 - mins * 60
+        document.querySelector('.settings .time-notice').innerHTML = `${hours} Hours, ${mins} Mins, ${seconds} Seconds remained until next tick...`
         console.log(running)
         if (running) {
           document.querySelector('.settings .buttons .button.start').classList.add('disabled')

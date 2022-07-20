@@ -1,8 +1,11 @@
 var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 const { bot } = require('../bot')
-
+const moment = require('moment')
 var interval;
+var tickTime;
+var period = 5400000
+
 
 const index = (req, res) => {
   res.render('index')
@@ -17,7 +20,7 @@ const settings = (req, res) => {
 
 const getVisits = async (req, res) => {
   const { limit, page } = req.params
-  const visits = await Visits.find({}).skip(page * limit).limit(limit)
+  const visits = await Visits.find({}).sort([['time', -1]]).skip(page * limit).limit(limit)
   const count = await Visits.countDocuments()
   res.status(200).send({ visits, count })
 }
@@ -36,22 +39,27 @@ const saveSettings = async (req, res) => {
 const getSettings = async (req, res) => {
   try {
     const settings = await Settings.find({})
-    res.status(200).send({ settings })
+    remainedTime = period / 1000 - moment().diff(tickTime, 'seconds')
+    res.status(200).send({ settings, remainedTime })
   } catch (e) {
     res.status(400).json({ error: e.message })
   }
 }
-
+const bott = () => {
+  console.log("tick...")
+}
 const start = async (req, res) => {
   try {
     var running = await Settings.findOne({ type: 'status' })
     if (running.sentence == 'running') return res.status(200).send('running')
     running.sentence = 'running'
     await running.save()
+    tickTime = moment()
     bot()
     interval = setInterval(() => {
+      tickTime = moment()
       bot()
-    }, 5400000)
+    }, period)
     res.status(200).send('running')
   } catch (e) {
     console.log(e)
