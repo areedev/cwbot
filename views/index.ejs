@@ -6,10 +6,42 @@
 </head>
 
 <body>
-  <div class="main-content">
-    <div class="buttons">
-      <a class="button" href="/visits">Show Visit History</a>
-      <a class="button" href="/settings">Settings</a>
+  <%- include('./partials/header', {id: '' , from: 'settings' }); %>
+    <div class="main">
+      <%- include('./partials/sidebar', {id: '' , from: 'settings' }); %>
+        <div class="main-content">
+          <div class="home">
+            <div class="accounts" style="display: flex; flex-direction:column; justify-content: center;">
+            </div>
+            <div class="">
+              <input class="username" placeholder="Username" />
+              <button class="button add">Add Account</button>
+            </div>
+          </div>
+        </div>
     </div>
-  </div>
 </body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var username = ''
+    $.get(`/api/accounts`, function (data, status) {
+      if (data.accounts.length == 0)
+        document.querySelector('.accounts').innerHTML = '<p>There is no accounts yet.</p>'
+      else {
+        var html = ''
+        for (var account of data.accounts) {
+          html += `<a href='${account._id}' class='account-link'>${account.username}</a>`
+        }
+        document.querySelector('.accounts').innerHTML = html
+      }
+    })
+    $('.username').on('input', (e) => username = e.target.value)
+    document.querySelector('.button.add').addEventListener('click', addaccount)
+    async function addaccount() {
+      $.post(`/api/accounts/add`, { username }, function (data, status) {
+        console.log(data)
+      })
+    }
+  });
+</script>

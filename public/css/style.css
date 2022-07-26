@@ -2,9 +2,7 @@
   box-sizing: border-box;
 }
 .button {
-  width: 160px;
-  /* height: 30px; */
-  font-size: 14px;
+  font-size: 12px;
   background-color: rgb(14, 201, 235);
   border-radius: 4px;
   color: white;
@@ -13,7 +11,7 @@
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   display: block;
-  padding: 12px 0px;
+  padding: 4px 12px;
 }
 .button.disabled {
   background-color: #888;
@@ -37,16 +35,20 @@ p {
 body {
   margin: 0;
 }
+.main {
+  width: 100vw;
+  display: flex;
+  height: calc(100vh - 80px);
+}
 .main-content {
-  max-width: 800px;
-  height: 100vh;
-  margin: 0 auto 0;
+  height: calc(100vh - 80px);
+  width: calc(100vw - 180px);
   text-align: center;
   overflow: auto;
-  padding: 32px 0px;
+  float: right;
 }
 .main-content .buttons {
-  height: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -76,9 +78,11 @@ body {
 
 .main-content .settings {
   text-align: left;
-  min-width: 80%;
+  width: 100%;
 }
-
+.main-content .settings textarea {
+  max-width: 600px;
+}
 .main-content .settings .bids {
   display: block;
   width: 100%;

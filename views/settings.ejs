@@ -6,28 +6,32 @@
 </head>
 
 <body>
-  <div class="main-content">
-    <div class="settings">
-      <div class="bids">
-        <p class="title">Web</p>
-        <textarea class="bid web"></textarea>
-        <p class="title">App</p>
-        <textarea class="bid app"></textarea>
-        <p class="title">EC</p>
-        <textarea class="bid ec"></textarea>
-      </div>
-      <div class="cookie">
-        <p class="title">Cookie</p>
-        <textarea class="json"></textarea>
-      </div>
-      <div class="buttons">
-        <button class='button save'>Save</button>
-        <button class='button start'>Start</button>
-        <button class='button stop'>Stop</button>
-      </div>
-      <p class="time-notice"></p>
+  <%- include('./partials/header', {id: id, from: 'settings' }); %>
+    <div class="main">
+      <%- include('./partials/sidebar', {id: id, from: 'settings' }); %>
+        <div class="main-content">
+          <div class="settings">
+            <div class="bids">
+              <p class="title">Web</p>
+              <textarea class="bid web"></textarea>
+              <p class="title">App</p>
+              <textarea class="bid app"></textarea>
+              <p class="title">EC</p>
+              <textarea class="bid ec"></textarea>
+            </div>
+            <div class="cookie">
+              <p class="title">Cookie</p>
+              <textarea class="json"></textarea>
+            </div>
+            <div class="buttons">
+              <button class='button save'>Save</button>
+              <button class='button start'>Start</button>
+              <button class='button stop'>Stop</button>
+            </div>
+            <p class="time-notice"></p>
+          </div>
+        </div>
     </div>
-  </div>
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
@@ -38,19 +42,20 @@
     $('.settings .bids .app').on('input', (e) => app = e.target.value)
     $('.settings .bids .ec').on('input', (e) => ec = e.target.value)
     $('.settings .cookie .json').on('input', (e) => json = e.target.value)
+    var id = "<%= id %>"
 
     document.querySelector('.button.save').addEventListener('click', save)
     document.querySelector('.button.start').addEventListener('click', start)
     document.querySelector('.button.stop').addEventListener('click', stop)
     loadSettings()
     function save() {
-      $.post(`/api/settings/save`, { web, app, ec, json }, function (data, status) {
+      $.post(`/api/settings/save`, { web, app, ec, json, id }, function (data, status) {
         console.log(data)
       })
     }
     function start() {
       if (running) return
-      $.get(`/api/settings/start`, function (data, status) {
+      $.get(`/api/settings/start/${id}`, function (data, status) {
         if (data == 'running') {
           document.querySelector('.settings .buttons .button.start').classList.add('disabled')
           document.querySelector('.settings .buttons .button.stop').classList.remove('disabled')
@@ -60,7 +65,7 @@
     }
     function stop() {
       if (!running) return
-      $.get(`/api/settings/stop`, function (data, status) {
+      $.get(`/api/settings/stop/${id}`, function (data, status) {
         if (data == 'stopped') {
           document.querySelector('.settings .buttons .button.start').classList.remove('disabled')
           document.querySelector('.settings .buttons .button.stop').classList.add('disabled')
@@ -69,13 +74,13 @@
       })
     }
     function loadSettings() {
-      $.get(`/api/settings`, function (data, status) {
+      $.get(`/api/settings/${id}`, function (data, status) {
         var { settings, remainedTime } = data
         web = settings.find(e => e.type == 'web').sentence
         app = settings.find(e => e.type == 'app').sentence
         ec = settings.find(e => e.type == 'ec').sentence
         json = settings.find(e => e.type == 'json').sentence
-        running = settings.find(e => e.type == 'status').sentence == 'running'
+        running = settings.find(e => e.type == 'status') ? settings.find(e => e.type == 'status').sentence == 'running' : false
         document.querySelector('.settings .bids .web').innerHTML = web
         document.querySelector('.settings .bids .app').innerHTML = app
         document.querySelector('.settings .bids .ec').innerHTML = ec

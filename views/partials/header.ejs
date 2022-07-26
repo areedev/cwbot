@@ -1,0 +1,20 @@
+<link href="/css/header.css" rel="stylesheet" type="text/css" />
+<div class="header">
+  <a href="/"><p class="title">Manager</p></a>
+  <div class="">
+    <div class="links"></div>
+    <div class="profile"></div>
+  </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var id = "<%= id %>"
+    var from = "<%= from %>"
+    document.querySelector(".links").innerHTML = `
+    <a class='${from == 'visits' ? 'active' : ''}' href='/visits/${id ? id : ''}'>Visits</a>
+    <a class='${from == 'settings' ? 'active' : ''}' href='/settings/${id ? id : ''}'>Settings</a>`
+  })
+
+</script>

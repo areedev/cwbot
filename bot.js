@@ -3,12 +3,12 @@ const Visits = require('./db/visits')
 const Settings = require('./db/settings');
 const moment = require('moment');
 const c = require('./constants/crowdworks.jp.cookies.json')
-const bot = async () => {
+const bot = async (id) => {
 
-  const webBid = await Settings.findOne({ type: 'web' })
-  const appBid = await Settings.findOne({ type: 'app' })
-  const ecBid = await Settings.findOne({ type: 'ec' })
-  var cookie = await Settings.findOne({ type: 'json' })
+  const webBid = await Settings.findOne({ type: 'web', account: id })
+  const appBid = await Settings.findOne({ type: 'app', account: id })
+  const ecBid = await Settings.findOne({ type: 'ec', account: id })
+  var cookie = await Settings.findOne({ type: 'json', account: id })
   const webUrl = 'https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1'
   const appUrl = 'https://crowdworks.jp/public/jobs/search?category_id=242&keep_search_criteria=true&order=new&hide_expired=true&page=1'
   const ecUrl = 'https://crowdworks.jp/public/jobs/search?category_id=226&keep_search_criteria=true&order=new&hide_expired=true&page=1'
@@ -46,18 +46,18 @@ const bot = async () => {
           link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobid
           console.log(link, `${cnt} links remained...`)
 
-          const visited = await Visits.findOne({ link })
-          const status = await Settings.findOne({ type: 'status' })
+          const visited = await Visits.findOne({ link, account: id })
+          const status = await Settings.findOne({ type: 'status', account: id })
           if (status.sentence == 'stopped') break
           if (!visited) {
             await page.goto(link)
             const url = await page.evaluate(() => document.location.href);
             if (url.indexOf('competition') > -1) {
-              await Visits.create({ link, time: Date.now() })
+              await Visits.create({ link, time: Date.now(), account: id })
               console.log("Competition...")
               continue
             } else if (url.indexOf('proposals/') > -1 && url.indexOf('proposals/new?job_offer_id') < 0) {
-              await Visits.create({ link, time: Date.now() })
+              await Visits.create({ link, time: Date.now(), account: id })
               console.log("Already applied...")
               continue
             }
@@ -142,7 +142,7 @@ const bot = async () => {
                 resolve();
               }, 2000);
             })
-            await Visits.create({ link, time: Date.now() })
+            await Visits.create({ link, time: Date.now(), account: id })
           }
         } catch (e) {
           // await Visits.create({ link, time: Date.now() })
@@ -158,6 +158,8 @@ const bot = async () => {
   await doBid(webUrl, webBid.sentence, 'Web')
   await doBid(appUrl, appBid.sentence, 'App')
   await doBid(ecUrl, ecBid.sentence, 'Ec')
+
+  await browser.close()
 }
 
 module.exports = { bot }
