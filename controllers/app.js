@@ -4,8 +4,8 @@ var Accounts = require('../db/accounts')
 const { bot } = require('../bot')
 const moment = require('moment')
 var intervals = [];
-// var period = 5400000
-var period = 10000
+var period = 5400000
+// var period = 10000
 
 
 const index = (req, res) => {
