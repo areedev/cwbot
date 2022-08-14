@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+<head>
+  <title>CW Bot</title>
+  <link href="/css/style.css" rel="stylesheet" type="text/css" />
+  <script>(function (w) { w.fpr = w.fpr || function () { w.fpr.q = w.fpr.q || []; w.fpr.q[arguments[0] == 'set' ? 'unshift' : 'push'](arguments); }; })(window);
+    fpr("init", { cid: "acu02bav" });
+    fpr("click");
+  </script>
+  <script src="https://cdn.firstpromoter.com/fpr.js" async></script>
+</head>
+
+<body>
+  <input type="text" id="email" />
+  <input type="button" id="register" value="Register" />
+  <script>
+    document.querySelector("#register").addEventListener('click', () => {
+      if (!document.querySelector("#email").value) return;
+      console.log("click", document.querySelector("#email").value)
+      window.fpr("referral", {email: document.querySelector("#email").value})
+    })
+  </script>
+</body>

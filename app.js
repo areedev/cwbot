@@ -7,7 +7,7 @@ var session = require('express-session');
 const express = require('express')
 const app = express()
 const http = require('http')
-app.set('port', 8080)
+app.set('port', 8000)
 const server = http.createServer(app)
 const mongoose = require('mongoose');
 const { bot } = require('./bot')
@@ -31,7 +31,7 @@ app.use('/', appRoute);
 const interval = 3600000
 
 
-server.listen(8080)
+server.listen(8000)
 server.on('listening', () => {
   console.log('Listening on 8080')
 })

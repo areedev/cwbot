@@ -2,9 +2,10 @@ var express = require('express');
 var router = express.Router();
 var app = require('../controllers/app')
 router.get('/', app.index)
-router.get('/:id', app.account)
 router.get('/visits/:id', app.visits)
 router.get('/settings/:id', app.settings)
+router.get('/register', app.register)
+router.get('/:id', app.account)
 
 router.get('/api/accounts', app.getAccounts)
 router.get('/api/account/:id', app.getAccount)

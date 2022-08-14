@@ -23,6 +23,11 @@ const settings = (req, res) => {
   res.render('settings', { id: req.params.id })
 }
 
+const register = (req, res) => {
+  console.log(req.query)
+  res.render('register')
+}
+
 const getVisits = async (req, res) => {
   const { limit, page, id } = req.params
   const visits = await Visits.find({ account: id }).sort([['time', -1]]).skip(page * limit).limit(limit)
@@ -145,6 +150,7 @@ module.exports = {
   index,
   account,
   visits,
+  register,
   settings,
   getVisits,
   saveSettings,
@@ -153,5 +159,6 @@ module.exports = {
   stop,
   addAccount,
   getAccounts,
-  getAccount
+  getAccount,
+  
 }
