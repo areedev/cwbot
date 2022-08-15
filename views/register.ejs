@@ -13,11 +13,18 @@
 <body>
   <input type="text" id="email" />
   <input type="button" id="register" value="Register" />
+  <input type="button" id="pay" value="Pay" />
+  <script src="https://js.stripe.com/v3/"></script>
   <script>
     document.querySelector("#register").addEventListener('click', () => {
       if (!document.querySelector("#email").value) return;
       console.log("click", document.querySelector("#email").value)
-      window.fpr("referral", {email: document.querySelector("#email").value})
+      window.fpr("referral", {email: document.querySelector("#email").value, uid: undefined})
+    })
+    document.querySelector("#pay").addEventListener('click', () => {
+      var stripe = Stripe('pk_test_51KQg0MC2odxr6FVi5ZIjrq1bnHZ4XXQAAtljP7CQUh8e8MxJswVDKofMqSYeEwaKsfAgEpuXi4dIIQ118PvpW48m00YckPkftz');
+      console.log(stripe)
+      stripe.redirectToCheckout({ sessionId: data.id });
     })
   </script>
 </body>
