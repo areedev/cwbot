@@ -145,6 +145,10 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
+const firstpromoterWebhook = async (req, res) => {
+  console.log(req.body)
+  res.json({});
+}
 init()
 module.exports = {
   index,
@@ -160,5 +164,5 @@ module.exports = {
   addAccount,
   getAccounts,
   getAccount,
-  
+  firstpromoterWebhook 
 }

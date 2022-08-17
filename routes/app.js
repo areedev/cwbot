@@ -15,4 +15,6 @@ router.get('/api/settings/:id', app.getSettings)
 router.get('/api/settings/start/:id', app.start)
 router.get('/api/settings/stop/:id', app.stop)
 router.get('/api/visits/:limit/:page/:id', app.getVisits)
+
+router.post('/webhook', app.firstpromoterWebhook)
 module.exports = router 
