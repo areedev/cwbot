@@ -1,9 +1,10 @@
 <link href="/css/header.css" rel="stylesheet" type="text/css" />
 <div class="header">
   <a href="/"><p class="title">Manager</p></a>
-  <div class="">
+  <div class="header-right">
     <div class="links"></div>
     <div class="profile"></div>
+    <div class="logout">Logout</div>
   </div>
 </div>
 
@@ -15,6 +16,14 @@
     document.querySelector(".links").innerHTML = `
     <a class='${from == 'visits' ? 'active' : ''}' href='/visits/${id ? id : ''}'>Visits</a>
     <a class='${from == 'settings' ? 'active' : ''}' href='/settings/${id ? id : ''}'>Settings</a>`
+
+    $('.logout').on('click', () => {
+      $.get('/api/logout', (data, status) => {
+        if (data.success) {
+          window.location.reload()
+        }
+      })
+    })
   })
 
 </script>

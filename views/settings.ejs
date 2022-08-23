@@ -43,7 +43,6 @@
     $('.settings .bids .ec').on('input', (e) => ec = e.target.value)
     $('.settings .cookie .json').on('input', (e) => json = e.target.value)
     var id = "<%= id %>"
-
     document.querySelector('.button.save').addEventListener('click', save)
     document.querySelector('.button.start').addEventListener('click', start)
     document.querySelector('.button.stop').addEventListener('click', stop)
@@ -74,6 +73,7 @@
       })
     }
     function loadSettings() {
+      console.log(id)
       $.get(`/api/settings/${id}`, function (data, status) {
         var { settings, remainedTime } = data
         web = settings.find(e => e.type == 'web').sentence

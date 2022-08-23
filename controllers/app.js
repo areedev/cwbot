@@ -1,17 +1,49 @@
 var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
+var Users = require('../db/user')
 const { bot } = require('../bot')
 const moment = require('moment')
+const jwt = require('jwt-simple')
 var intervals = [];
 var period = 5400000
 // var period = 10000
 
 
-const index = (req, res) => {
-  res.render('index')
+const index = async (req, res, next) => {
+  var { cookie } = req.headers
+  if (cookie) {
+    var output = {};
+    cookie.split(/\s*;\s*/).forEach(function (pair) {
+      pair = pair.split(/\s*=\s*/);
+      output[pair[0]] = pair.splice(1).join('=');
+    });
+    if (output.token) {
+      var payload = jwt.decode(output.token, '12345678')
+      if (payload._id) {
+        const user = await Users.findById(payload._id)
+        if (user) {
+          if (req.url == '/')
+            return res.render('index')
+          else {
+            req.body.user = user;
+            return next()
+          }
+        }
+      }
+    }
+  }
+  if (req.url == '/login')
+    return res.render('login')
+  else if (req.url.indexOf('api') >= 0) {
+    return res.status(400).json({ success: false, error: 'Invalid user' })
+  }
+  else
+    return res.redirect('/login')
 }
-
+const login = (req, res) => {
+  return res.render('login')
+}
 const account = (req, res) => {
   res.render('account', { id: req.params.id })
 }
@@ -138,8 +170,30 @@ const getAccounts = async (req, res) => {
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
-
   }
+}
+
+const doLogin = async (req, res) => {
+  try {
+    const { username, password } = req.body
+    var user = await Users.findOne({ username, password })
+    if (user) {
+      var token = jwt.encode({ _id: user._id }, '12345678')
+      res.cookie('token', token, { maxAge: 86400000 }).json({ success: true, result: { _id: user._id } })
+    } else
+      res.status(400).json({ success: false, error: 'Invalid user' })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const doLoginjwt = async (req, res) => {
+  console.log('doing login', req.body.user)
+  res.json({ success: true })
+}
+const logout = async (req, res) => {
+  console.log('doing logout', req.body.user)
+  res.cookie('token', '').json({ success: true })
 }
 const init = async () => {
   console.log('init')
@@ -152,6 +206,7 @@ const firstpromoterWebhook = async (req, res) => {
 init()
 module.exports = {
   index,
+  login,
   account,
   visits,
   register,
@@ -164,5 +219,8 @@ module.exports = {
   addAccount,
   getAccounts,
   getAccount,
-  firstpromoterWebhook 
+  doLogin,
+  doLoginjwt,
+  logout,
+  firstpromoterWebhook
 }
