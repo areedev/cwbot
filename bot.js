@@ -88,6 +88,7 @@ const bot = async (id) => {
                 else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 260000
                 else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 450000
                 else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 800000
+                else if ((budget.match(/円/g) || []).length == 1) budgetValue = parseFloat(budget.substring(0, budget.length - 1))
                 else budgetValue = 200000
               } else if (type == '時間単価制') {
                 budgetValue = 3000
