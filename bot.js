@@ -104,6 +104,7 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
     if (!visited) {
       await page.goto(link);
       const url = await page.evaluate(() => document.location.href);
+      console.log(url)
       if (url.indexOf('competition') > -1) {
         await Visits.create({ link, time: Date.now(), account: id });
         return console.log("Competition...");
