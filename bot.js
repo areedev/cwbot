@@ -48,21 +48,33 @@ const startBrowser = async () => {
 
 const doLogin = async (page, id) => {
   try {
-    await page.goto(loginUrl, { timeout: 60000 });
-    await page.waitForSelector('#username', { timeout: 60000 });
     var username = await Settings.findOne({ type: 'username', account: id });
     var password = await Settings.findOne({ type: 'password', account: id });
     if (!username || !password) {
       console.log('Username and password is empty.');
       return;
     }
-    await page.$eval('#username', el => el.value = username.sentence);
-    await page.$eval('#password', el => el.value = password.sentence);
+    const setLoginCredentials = async (page, selector1, value1, selector2, value2) => {
+      await page.waitForSelector(selector1);
+      await page.click(selector1);
+      await page.evaluate((data) => {
+        return document.querySelector(data.selector).value = data.value;
+      }, { selector: selector1, value: value1 })
+      await page.click(selector2);
+      await page.evaluate((data) => {
+        return document.querySelector(data.selector).value = data.value;
+      }, { selector: selector2, value: value2 })
+    }
+    await page.goto(loginUrl, { timeout: 60000 });
+    await page.waitForSelector('#username');
+    await setLoginCredentials(page, '#username', username.sentence, '#password', password.sentence)
+    // await page.$eval('#username', el => el.value = username);
+    // await page.$eval('#password', el => el.value = password);
     await delay(3000);
     await page.$eval('.button-login', el => el.click());
     await delay(3000);
   } catch (e) {
-    console.log('Error in login...')
+    console.log('Error in login...', e)
   }
 }
 const getJobIdFromUrl = (url) => {
@@ -188,6 +200,7 @@ const goJobsPage = async (page, id, type) => {
 }
 
 const bot = async (id) => {
+
   const { page, browser } = await startBrowser();
   await doLogin(page, id);
   for (var type of types) {
@@ -197,11 +210,12 @@ const bot = async (id) => {
 }
 
 const doCertain = async (id, url, type) => {
+
   const { page, browser } = await startBrowser();
   await doLogin(page, id);
   const jobId = getJobIdFromUrl(url)
   const bid = await Settings.findOne({ account: id, type });
-  sendProp(page, jobId, id, bid.sentence, true);
+  await sendProp(page, jobId, id, bid.sentence, true);
   await browser.close();
 }
 
