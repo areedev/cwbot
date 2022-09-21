@@ -99,7 +99,7 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
   const visited = await Visits.findOne({ link, account: id });
   // const status = await Settings.findOne({ type: 'status', account: id });
   // if (!force && status.sentence == 'stopped') return;
-
+  if (visited) console.log('Already visited...')
   try {
     if (!visited) {
       await page.goto(link);
