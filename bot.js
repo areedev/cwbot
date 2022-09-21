@@ -162,7 +162,7 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
       await Visits.create({ link, time: Date.now(), account: id });
     }
   } catch (e) {
-
+    console.log(e)
   }
 }
 const goJobsPage = async (page, id, type) => {
