@@ -8,6 +8,7 @@ router.get('/login', app.login)
 router.get('/visits/:id?', app.visits)
 router.get('/settings/:id?', app.settings)
 router.get('/register', app.register)
+router.get('/manual', app.manual)
 // router.get('/:id', app.account)
 
 
@@ -18,8 +19,12 @@ router.post('/api/accounts/add', app.addAccount)
 router.post('/api/settings/save', app.saveSettings)
 router.get('/api/settings/:id', app.getSettings)
 router.get('/api/settings/start/:id', app.start)
+router.get('/api/settings/once/:id', app.once)
 router.get('/api/settings/stop/:id', app.stop)
 router.get('/api/visits/:limit/:page/:id', app.getVisits)
+router.post('/api/manual/start', app.startManual)
+router.post('/api/manual/toggle', app.toggleAuto)
+router.get('/api/auto', app.getAuto)
 
 router.post('/webhook', app.firstpromoterWebhook)
 module.exports = router 

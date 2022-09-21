@@ -11,22 +11,48 @@
       <%- include('./partials/sidebar', {id: id, from: 'settings' }); %>
         <div class="main-content">
           <div class="settings">
+            <div style="display: flex;">
+              <p class="">username</p>
+              <input class="username" />
+              <p class="">password</p>
+              <input type="password" class="password" />
+            </div>
             <div class="bids">
-              <p class="title">Web</p>
-              <textarea class="bid web"></textarea>
-              <p class="title">App</p>
-              <textarea class="bid app"></textarea>
-              <p class="title">EC</p>
-              <textarea class="bid ec"></textarea>
+              <div style="display:flex; width: 100%;">
+                <div style="flex: 1;">
+                  <p class="title">Web</p>
+                  <textarea class="bid web"></textarea>
+                </div>
+                <div style="flex: 1;">
+                  <p class="title">App</p>
+                  <textarea class="bid app"></textarea>
+                </div>
+              </div>
+              <div style="display:flex;width: 100%;">
+                <div style="flex: 1;">
+                  <p class="title">Sys</p>
+                  <textarea class="bid sys"></textarea>
+                </div>
+                <div style="flex: 1;">
+                  <p class="title">EC</p>
+                  <textarea class="bid ec"></textarea>
+                </div>
+              </div>
+
             </div>
             <div class="cookie">
               <p class="title">Cookie</p>
               <textarea class="json"></textarea>
             </div>
             <div class="buttons">
+              <div>
+                <input type="checkbox" id="auto" name="auto" class="auto">
+                <label for="auto">Auto</label>
+              </div>
               <button class='button save'>Save</button>
-              <button class='button start'>Start</button>
-              <button class='button stop'>Stop</button>
+              <button class='button start' style="display: none;">Start</button>
+              <button class='button once'>Once</button>
+              <button class='button stop' style="display: none;">Stop</button>
             </div>
             <p class="time-notice"></p>
           </div>
@@ -36,19 +62,30 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
   $(document).ready(function () {
-    var web = '', app = '', ec = '', json = ''
+    var web = '', app = '', ec = '', json = '', sys = '', username = '', password = ''
     var running = false
     $('.settings .bids .web').on('input', (e) => web = e.target.value)
     $('.settings .bids .app').on('input', (e) => app = e.target.value)
+    $('.settings .bids .sys').on('input', (e) => sys = e.target.value)
     $('.settings .bids .ec').on('input', (e) => ec = e.target.value)
     $('.settings .cookie .json').on('input', (e) => json = e.target.value)
+    $('.settings .username').on('input', (e) => username = e.target.value)
+    $('.settings .password').on('input', (e) => password = e.target.value)
     var id = "<%= id %>"
     document.querySelector('.button.save').addEventListener('click', save)
     document.querySelector('.button.start').addEventListener('click', start)
+    document.querySelector('.button.once').addEventListener('click', once)
     document.querySelector('.button.stop').addEventListener('click', stop)
     loadSettings()
     function save() {
-      $.post(`/api/settings/save`, { web, app, ec, json, id }, function (data, status) {
+      var auto = document.querySelector('.settings .auto').checked
+      console.log(auto)
+      $.post(`/api/settings/save`, { web, app, ec, sys, json, username, password, id, auto }, function (data, status) {
+        console.log(data)
+      })
+    }
+    function once() {
+      $.get(`/api/settings/once/${id}`, function (data, status) {
         console.log(data)
       })
     }
@@ -75,16 +112,23 @@
     function loadSettings() {
       console.log(id)
       $.get(`/api/settings/${id}`, function (data, status) {
-        var { settings, remainedTime } = data
-        web = settings.find(e => e.type == 'web').sentence
-        app = settings.find(e => e.type == 'app').sentence
-        ec = settings.find(e => e.type == 'ec').sentence
-        json = settings.find(e => e.type == 'json').sentence
+        var { settings, remainedTime, auto } = data
+        web = settings.find(e => e.type == 'web')?.sentence
+        app = settings.find(e => e.type == 'app')?.sentence
+        sys = settings.find(e => e.type == 'sys')?.sentence
+        ec = settings.find(e => e.type == 'ec')?.sentence
+        json = settings.find(e => e.type == 'json')?.sentence
+        username = settings.find(e => e.type == 'username')?.sentence
+        password = settings.find(e => e.type == 'password')?.sentence
         running = settings.find(e => e.type == 'status') ? settings.find(e => e.type == 'status').sentence == 'running' : false
         document.querySelector('.settings .bids .web').innerHTML = web
         document.querySelector('.settings .bids .app').innerHTML = app
         document.querySelector('.settings .bids .ec').innerHTML = ec
+        document.querySelector('.settings .bids .sys').innerHTML = sys
         document.querySelector('.settings .cookie .json').innerHTML = json
+        document.querySelector('.settings .username').value = username
+        document.querySelector('.settings .password').value = password
+        document.querySelector('.settings .auto').checked = auto
 
         const hours = Math.floor(remainedTime / 3600)
         const mins = Math.floor((remainedTime - hours * 3600) / 60)

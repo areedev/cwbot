@@ -2,12 +2,14 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot } = require('../bot')
+const { bot, doCertain } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 var intervals = [];
+var interval = null;
+var tickTime;
 var period = 5400000
-// var period = 10000
+// var period = 5000
 
 
 const index = async (req, res, next) => {
@@ -59,7 +61,9 @@ const register = (req, res) => {
   console.log(req.query)
   res.render('register')
 }
-
+const manual = (req, res) => {
+  res.render('manual', { id: req.params.id })
+}
 const getVisits = async (req, res) => {
   const { limit, page, id } = req.params
   const visits = await Visits.find({ account: id }).sort([['time', -1]]).skip(page * limit).limit(limit)
@@ -68,22 +72,19 @@ const getVisits = async (req, res) => {
 }
 const saveSettings = async (req, res) => {
   try {
-    const { web, app, ec, json, id } = req.body
-    console.log(id)
-    var setting = await Settings.findOne({ account: id })
-    if (setting) {
-      await Settings.updateOne({ type: 'web', account: id }, { sentence: web })
-      await Settings.updateOne({ type: 'app', account: id }, { sentence: app })
-      await Settings.updateOne({ type: 'ec', account: id }, { sentence: ec })
-      await Settings.updateOne({ type: 'json', account: id }, { sentence: json })
-    } else {
-      await Settings.create({ type: 'web', account: id, sentence: web })
-      await Settings.create({ type: 'app', account: id, sentence: app })
-      await Settings.create({ type: 'ec', account: id, sentence: ec })
-      await Settings.create({ type: 'json', account: id, sentence: json })
-      await Settings.create({ type: 'status', account: id, sentence: 'stopped' })
+    const { id, auto } = req.body
+    const types = ['web', 'app', 'sys', 'ec', 'json', 'username', 'password']
+
+    for (var type of types) {
+      var setting = await Settings.findOne({ account: id, type })
+      if (setting) {
+        await Settings.updateOne({ type, account: id }, { sentence: req.body[type] })
+      } else {
+        await Settings.create({ type, account: id, sentence: req.body[type] })
+      }
     }
-    res.status(200).send({ web, app, ec, json, id })
+    await Accounts.findByIdAndUpdate(id, { auto })
+    res.status(200).send({ success: true })
   } catch (e) {
     res.status(400).json({ error: e.message })
   }
@@ -92,9 +93,10 @@ const getSettings = async (req, res) => {
   try {
     const { id } = req.params
     const settings = await Settings.find({ account: id })
+    const auto = (await Accounts.findById(id)).auto
     var tickTime = intervals.find(e => e.id == id) ? intervals.find(e => e.id == id).tickTime : null
     remainedTime = tickTime ? period / 1000 - moment().diff(tickTime, 'seconds') : period / 1000
-    res.status(200).send({ settings, remainedTime })
+    res.status(200).send({ settings, remainedTime, auto })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -102,6 +104,16 @@ const getSettings = async (req, res) => {
 }
 const bott = (id) => {
   console.log(id + " tick...")
+}
+const once = async (req, res) => {
+  try {
+    var { id } = req.params
+    bot(id)
+    res.status(200).send('success')
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
 }
 const start = async (req, res) => {
   try {
@@ -199,10 +211,79 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
+const startManual = async (req, res) => {
+  try {
+    const { url, type } = req.body
+    console.log('Doing manual bid to ' + url + '...')
+    const accounts = await Accounts.find()
+    for (var account of accounts) {
+      console.log('Doing account' + account.username);
+      await doCertain(account._id, url, type);
+    }
+    res.json({ success: true })
+  } catch (e) {
+    res.json({ success: false })
+  }
+}
+const doAllBid = async () => {
+  const accounts = await Accounts.find()
+  for (const account of accounts) {
+    if (account?.auto)
+      await bott(account._id);
+  }
+}
+const startAuto = async () => {
+  tickTime = moment()
+  interval = setInterval(() => {
+    tickTime = moment()
+    doAllBid();
+  }, period)
+}
+const stopAuto = async () => {
+  if (interval) clearInterval(interval)
+  tickTime = null
+}
+
+const toggleAuto = async (req, res) => {
+  try {
+    var auto = await Settings.findOne({ type: 'auto' });
+    if (!auto) {
+      auto = await Settings.create({ type: 'auto', sentence: 'false' });
+    }
+    if (auto.sentence == 'false') {
+      await Settings.findOneAndUpdate({ type: 'auto' }, { sentence: 'true' })
+      var remainedTime = period / 1000 - moment().diff(moment(), 'seconds')
+      res.json({ result: true, remainedTime })
+      startAuto()
+    } else if (auto.sentence == 'true') {
+      await Settings.findOneAndUpdate({ type: 'auto' }, { sentence: 'false' })
+      res.json({ result: false })
+      stopAuto()
+    }
+  } catch (e) {
+    res.json({ success: false })
+  }
+}
+
+const getAuto = async (req, res) => {
+  const auto = await Settings.findOne({ type: 'auto' });
+  console.log(tickTime)
+  var remainedTime = tickTime ? period / 1000 - moment().diff(tickTime, 'seconds') : period / 1000
+
+  if (!auto) {
+    res.json({ result: false })
+  } else {
+    if (auto.sentence == 'false')
+      res.json({ result: false })
+    else
+      res.json({ result: true, remainedTime })
+  }
+}
 const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
   res.json({});
 }
+
 init()
 module.exports = {
   index,
@@ -210,6 +291,7 @@ module.exports = {
   account,
   visits,
   register,
+  manual,
   settings,
   getVisits,
   saveSettings,
@@ -222,5 +304,9 @@ module.exports = {
   doLogin,
   doLoginjwt,
   logout,
+  startManual,
+  once,
+  toggleAuto,
+  getAuto,
   firstpromoterWebhook
 }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<head>
+  <title>CWB - Manual</title>
+  <link href="/css/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  <%- include('./partials/header', {id: id, from: 'visits' }); %>
+    <div class="main">
+      <%- include('./partials/sidebar', {id: id, from: 'visits' }); %>
+        <div class="main-content">
+          <div style="display: flex; padding: 12px;">
+            <p class="info">Url</p>
+            <input class="url" style="width: 600px;" />
+            <select class="type">
+              <option value="web">Web</option>
+              <option value="app">App</option>
+              <option value="sys">Sys</option>
+              <option value="ec">Ec</option>
+            </select>
+            <button class='button start'>Start</button>
+          </div>
+          <button class='button auto'>Start Auto</button>
+          <p class="time-notice"></p>
+        </div>
+    </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" crossorigin="anonymous"
+  referrerpolicy="no-referrer"></script>
+
+<script>
+  $(document).ready(function () {
+    var tickTime, interval;
+    function start() {
+      var url = document.querySelector('.url').value
+      var type = document.querySelector('.type').value
+      console.log(type)
+      $.post(`/api/manual/start`, { url, type }, function (data, status) {
+        console.log(data)
+      })
+    }
+    const getTimeSentence = (time) => {
+      const hours = Math.floor(time / 3600)
+      const mins = Math.floor((time - hours * 3600) / 60)
+      const seconds = time - hours * 3600 - mins * 60
+      return `${hours} Hours, ${mins} Mins, ${seconds} Seconds remained until next tick...`
+    }
+    function handleAuto(data) {
+      if (data.result) {
+        document.querySelector('.button.auto').innerHTML = 'Stop Auto'
+        tickTime = data.remainedTime;
+        document.querySelector('.time-notice').innerHTML = getTimeSentence(tickTime)
+        interval = setInterval(() => {
+          tickTime--;
+          document.querySelector('.time-notice').innerHTML = getTimeSentence(tickTime)
+          if (tickTime == 0) tickTime = 5400
+        }, 1000);
+      }
+      else {
+        document.querySelector('.button.auto').innerHTML = 'Start Auto'
+        document.querySelector('.time-notice').innerHTML = ''
+        if (interval) clearInterval(interval)
+      }
+    }
+    function toggleAuto() {
+      $.post(`/api/manual/toggle`, {}, function (data, status) {
+        handleAuto(data)
+      })
+    }
+
+
+    $.get(`/api/auto`, function (data, status) {
+      handleAuto(data)
+    })
+    document.querySelector('.button.start').addEventListener('click', start)
+    document.querySelector('.button.auto').addEventListener('click', toggleAuto)
+
+  });
+</script>
