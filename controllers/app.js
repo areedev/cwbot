@@ -216,11 +216,11 @@ const startManual = async (req, res) => {
     const { url, type } = req.body
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
+    res.json({ success: true })
     for (var account of accounts) {
-      console.log('Doing account' + account.username);
+      console.log('Doing account ' + account.username);
       await doCertain(account._id, url, type);
     }
-    res.json({ success: true })
   } catch (e) {
     res.json({ success: false })
   }
@@ -229,7 +229,7 @@ const doAllBid = async () => {
   const accounts = await Accounts.find()
   for (const account of accounts) {
     if (account?.auto)
-      await bott(account._id);
+      await bot(account._id);
   }
 }
 const startAuto = async () => {

@@ -47,19 +47,23 @@ const startBrowser = async () => {
 }
 
 const doLogin = async (page, id) => {
-  await page.goto(loginUrl, { timeout: 60000 });
-  await page.waitForSelector('#username', { timeout: 60000 });
-  var username = await Settings.findOne({ type: 'username', account: id });
-  var password = await Settings.findOne({ type: 'password', account: id });
-  if (!username || !password) {
-    console.log('Username and password is empty.');
-    return;
+  try {
+    await page.goto(loginUrl, { timeout: 60000 });
+    await page.waitForSelector('#username', { timeout: 60000 });
+    var username = await Settings.findOne({ type: 'username', account: id });
+    var password = await Settings.findOne({ type: 'password', account: id });
+    if (!username || !password) {
+      console.log('Username and password is empty.');
+      return;
+    }
+    await page.$eval('#username', el => el.value = username.sentence);
+    await page.$eval('#password', el => el.value = password.sentence);
+    await delay(3000);
+    await page.$eval('.button-login', el => el.click());
+    await delay(3000);
+  } catch (e) {
+    console.log('Error in login...')
   }
-  await page.$eval('#username', el => el.value = username.sentence);
-  await page.$eval('#password', el => el.value = password.sentence);
-  await delay(3000);
-  await page.$eval('.button-login', el => el.click());
-  await delay(3000);
 }
 const getJobIdFromUrl = (url) => {
   return url.getAttribute('href').substring(url.getAttribute('href').lastIndexOf('/') + 1)
