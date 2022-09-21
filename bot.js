@@ -211,9 +211,12 @@ const bot = async (id) => {
 
 const doCertain = async (id, url, type) => {
 
+  const jobId = getJobIdFromUrl(url)
+  var link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobId;
+  const visited = await Visits.findOne({ link, account: id });
+  if (visited) console.log('Already visited...');
   const { page, browser } = await startBrowser();
   await doLogin(page, id);
-  const jobId = getJobIdFromUrl(url)
   const bid = await Settings.findOne({ account: id, type });
   await sendProp(page, jobId, id, bid.sentence, true);
   await browser.close();
