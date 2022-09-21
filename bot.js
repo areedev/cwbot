@@ -66,7 +66,7 @@ const doLogin = async (page, id) => {
   }
 }
 const getJobIdFromUrl = (url) => {
-  return url.getAttribute('href').substring(url.getAttribute('href').lastIndexOf('/') + 1)
+  return url.substring(url.lastIndexOf('/') + 1)
 }
 const defineBudget = (type, budget) => {
   var budgetValue = 0;
