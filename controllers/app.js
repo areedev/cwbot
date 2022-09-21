@@ -211,18 +211,25 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
-const startManual = async (req, res) => {
+const doCertainBid = async (url, type) => {
   try {
-    const { url, type } = req.body
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
-    res.json({ success: true })
     for (var account of accounts) {
       console.log('Doing account ' + account.username);
       await doCertain(account._id, url, type);
     }
   } catch (e) {
-    res.json({ success: false })
+    console.log(e)
+  }
+}
+const startManual = async (req, res) => {
+  try {
+    const { url, type } = req.body
+    res.json({ success: true });
+    doCertainBid(url, type)
+  } catch (e) {
+    res.json({ success: false });
   }
 }
 const doAllBid = async () => {
