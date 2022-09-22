@@ -26,7 +26,7 @@ const startBrowser = async () => {
   //   defaultViewport: null,
   //   args: ['--start-maximized']
   // });
-
+  console.log('Opening browser...')
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -223,6 +223,7 @@ const doCertain = async (id, url, type) => {
   const bid = await Settings.findOne({ account: id, type });
   await sendProp(page, jobId, id, bid.sentence, true);
   await browser.close();
+  console.log('Browser closed...')
 }
 
 module.exports = { bot, doCertain }
