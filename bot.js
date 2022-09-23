@@ -119,6 +119,8 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
       console.log(url)
       if (url.indexOf('contracts/') > -1) {
         return console.log('Already applied...')
+      } else if (url.indexOf('crowdworks.jp/login') > -1) {
+        return console.log('Login failed...')
       }
       if (url.indexOf('competition') > -1) {
         await Visits.create({ link, time: Date.now(), account: id });
