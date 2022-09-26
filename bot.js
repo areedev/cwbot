@@ -23,24 +23,24 @@ const delay = (time) => {
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id)
   console.log('Opening browser...')
-  var params = {
-    headless: false,
-    defaultViewport: null
-  }
-  var args = ['--start-maximized']
   // var params = {
-  //   defaultViewport: null,
-  //   headless: true,
-  //   devtools: false,
+  //   headless: false,
+  //   defaultViewport: null
   // }
-  // var args = [
-  //   '--disable-gpu',
-  //   '--disable-dev-shm-usage',
-  //   '--no-sandbox',
-  //   '--disable-setuid-sandbox',
-  //   '--ignore-certificate-errors',
-  //   '--ignore-certificate-errors-spki-list'
-  // ]
+  // var args = ['--start-maximized']
+  var params = {
+    defaultViewport: null,
+    headless: true,
+    devtools: false,
+  }
+  var args = [
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--ignore-certificate-errors',
+    '--ignore-certificate-errors-spki-list'
+  ]
   if (proxy && proxy.ip && proxy.port && proxy.type) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
   }

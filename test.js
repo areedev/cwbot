@@ -15,7 +15,7 @@ const fun = async () => {
     const cookie = (await Settings.findOne({ account: id, type: 'json' })).sentence
     const username = (await Settings.findOne({ account: id, type: 'username' })).sentence
     const password = (await Settings.findOne({ account: id, type: 'password' })).sentence
-    const status = (await Settings.findOne({ account: id, type: 'status' })).sentence
+    const status = (await Settings.findOne({ account: id, type: 'status' }))?.sentence
     await Accounts.findByIdAndUpdate(id, { auth: { username, password }, bids: { web, app, ec, sys }, cookie, status })
   }
 
