@@ -54,7 +54,6 @@ const startBrowser = async (id) => {
 const doLogin = async (page, id) => {
   try {
     var { auth } = await Accounts.findById(id, 'auth')
-    console.log(auth)
     var { username, password } = auth
     if (!username || !password) {
       console.log('Username and password is empty.');
