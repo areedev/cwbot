@@ -6,7 +6,6 @@ const dbConfig = require('./db/config')
 const fun = async () => {
   mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
   var accounts = await Accounts.find()
-  accounts = []
   for (var account of accounts) {
     var id = account._id
     const web = (await Settings.findOne({ account: id, type: 'web' })).sentence
