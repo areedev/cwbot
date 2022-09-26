@@ -17,6 +17,28 @@
               <p class="">password</p>
               <input type="password" class="password" />
             </div>
+            <div>
+              <p>Proxy:</p>
+              <div style="display: flex;">
+                <p class="">ip</p>
+                <input class="ip" />
+                <p class="">port</p>
+                <input class="port" />
+                <p class="">type</p>
+                <select class="proxy_type">
+                  <option value="http">HTTP</option>
+                  <option value="https">HTTPS</option>
+                  <option value="socks4">SOCKS4</option>
+                  <option value="socks5">SOCKS5</option>
+                </select>
+              </div>
+              <div style="display: flex;">
+                <p class="">username</p>
+                <input class="proxy_username" />
+                <p class="">password</p>
+                <input type="password" class="proxy_password" />
+              </div>
+            </div>
             <div class="bids">
               <div style="display:flex; width: 100%;">
                 <div style="flex: 1;">
@@ -42,7 +64,7 @@
             </div>
             <div class="cookie">
               <p class="title">Cookie</p>
-              <textarea class="json"></textarea>
+              <textarea class="cookie"></textarea>
             </div>
             <div class="buttons">
               <div>
@@ -62,13 +84,8 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
   $(document).ready(function () {
-    var web = '', app = '', ec = '', json = '', sys = '', username = '', password = ''
+    var web = '', app = '', ec = '', cookie = '', sys = '', username = '', password = ''
     var running = false
-    $('.settings .bids .web').on('input', (e) => web = e.target.value)
-    $('.settings .bids .app').on('input', (e) => app = e.target.value)
-    $('.settings .bids .sys').on('input', (e) => sys = e.target.value)
-    $('.settings .bids .ec').on('input', (e) => ec = e.target.value)
-    $('.settings .cookie .json').on('input', (e) => json = e.target.value)
     $('.settings .username').on('input', (e) => username = e.target.value)
     $('.settings .password').on('input', (e) => password = e.target.value)
     var id = "<%= id %>"
@@ -78,11 +95,27 @@
     document.querySelector('.button.stop').addEventListener('click', stop)
     loadSettings()
     function save() {
+      var web = document.querySelector('.settings .bids .web').value
+      var app = document.querySelector('.settings .bids .app').value
+      var ec = document.querySelector('.settings .bids .ec').value
+      var sys = document.querySelector('.settings .bids .sys').value
       var auto = document.querySelector('.settings .auto').checked
-      console.log(auto)
-      $.post(`/api/settings/save`, { web, app, ec, sys, json, username, password, id, auto }, function (data, status) {
-        console.log(data)
-      })
+      var cookie = document.querySelector('.settings .cookie .cookie').value
+      var username = document.querySelector('.settings .username').value
+      var password = document.querySelector('.settings .password').value
+      var ip = document.querySelector('.settings .ip').value
+      var port = document.querySelector('.settings .port').value
+      var type = document.querySelector('.settings .proxy_type').value
+      var proxy_username = document.querySelector('.settings .proxy_username').value
+      var proxy_password = document.querySelector('.settings .proxy_password').value
+      $.post(`/api/settings/save`,
+        {
+          bids: { web, app, ec, sys }, cookie, auth: { username, password }, id, auto,
+          proxy: { ip, port, type, username: proxy_username, password: proxy_password }
+        },
+        function (data, status) {
+          console.log(data)
+        })
     }
     function once() {
       $.get(`/api/settings/once/${id}`, function (data, status) {
@@ -110,26 +143,22 @@
       })
     }
     function loadSettings() {
-      console.log(id)
       $.get(`/api/settings/${id}`, function (data, status) {
-        var { settings, remainedTime, auto } = data
-        web = settings.find(e => e.type == 'web')?.sentence
-        app = settings.find(e => e.type == 'app')?.sentence
-        sys = settings.find(e => e.type == 'sys')?.sentence
-        ec = settings.find(e => e.type == 'ec')?.sentence
-        json = settings.find(e => e.type == 'json')?.sentence
-        username = settings.find(e => e.type == 'username')?.sentence
-        password = settings.find(e => e.type == 'password')?.sentence
-        running = settings.find(e => e.type == 'status') ? settings.find(e => e.type == 'status').sentence == 'running' : false
-        document.querySelector('.settings .bids .web').innerHTML = web
-        document.querySelector('.settings .bids .app').innerHTML = app
-        document.querySelector('.settings .bids .ec').innerHTML = ec
-        document.querySelector('.settings .bids .sys').innerHTML = sys
-        document.querySelector('.settings .cookie .json').innerHTML = json
-        document.querySelector('.settings .username').value = username
-        document.querySelector('.settings .password').value = password
-        document.querySelector('.settings .auto').checked = auto
-
+        var { settings, remainedTime } = data
+        running = settings.status ? settings.status == 'running' : false
+        document.querySelector('.settings .bids .web').innerHTML = settings?.bids?.web || ''
+        document.querySelector('.settings .bids .app').innerHTML = settings?.bids?.app || ''
+        document.querySelector('.settings .bids .ec').innerHTML = settings?.bids?.ec || ''
+        document.querySelector('.settings .bids .sys').innerHTML = settings?.bids?.sys || ''
+        document.querySelector('.settings .cookie .cookie').innerHTML = settings?.cookie || ''
+        document.querySelector('.settings .username').value = settings?.auth?.username || ''
+        document.querySelector('.settings .password').value = settings?.auth?.password || ''
+        document.querySelector('.settings .auto').checked = settings?.auto
+        document.querySelector('.settings .ip').value = settings?.proxy?.ip || ''
+        document.querySelector('.settings .port').value = settings?.proxy?.port || ''
+        document.querySelector('.settings .proxy_username').value = settings?.proxy?.username || ''
+        document.querySelector('.settings .proxy_password').value = settings?.proxy?.password || ''
+        document.querySelector('.settings .proxy_type').value = settings?.proxy?.type || 'http'
         const hours = Math.floor(remainedTime / 3600)
         const mins = Math.floor((remainedTime - hours * 3600) / 60)
         const seconds = remainedTime - hours * 3600 - mins * 60

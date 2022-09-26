@@ -58,7 +58,6 @@ const settings = (req, res) => {
 }
 
 const register = (req, res) => {
-  console.log(req.query)
   res.render('register')
 }
 const manual = (req, res) => {
@@ -72,18 +71,8 @@ const getVisits = async (req, res) => {
 }
 const saveSettings = async (req, res) => {
   try {
-    const { id, auto } = req.body
-    const types = ['web', 'app', 'sys', 'ec', 'json', 'username', 'password']
-
-    for (var type of types) {
-      var setting = await Settings.findOne({ account: id, type })
-      if (setting) {
-        await Settings.updateOne({ type, account: id }, { sentence: req.body[type] })
-      } else {
-        await Settings.create({ type, account: id, sentence: req.body[type] })
-      }
-    }
-    await Accounts.findByIdAndUpdate(id, { auto })
+    const { id, auto, proxy, bids, auth, cookie } = req.body
+    await Accounts.findByIdAndUpdate(id, { auto, proxy, bids, cookie, auth })
     res.status(200).send({ success: true })
   } catch (e) {
     res.status(400).json({ error: e.message })
@@ -92,11 +81,11 @@ const saveSettings = async (req, res) => {
 const getSettings = async (req, res) => {
   try {
     const { id } = req.params
-    const settings = await Settings.find({ account: id })
-    const auto = (await Accounts.findById(id)).auto
+    const account = await Accounts.findById(id)
+    const { auth, cookie, bids, proxy, auto } = account
     var tickTime = intervals.find(e => e.id == id) ? intervals.find(e => e.id == id).tickTime : null
     remainedTime = tickTime ? period / 1000 - moment().diff(tickTime, 'seconds') : period / 1000
-    res.status(200).send({ settings, remainedTime, auto })
+    res.status(200).send({ settings: { auth, cookie, bids, proxy, auto }, remainedTime })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -155,7 +144,7 @@ const addAccount = async (req, res) => {
     var { username } = req.body
     if (!username) return res.status(400).json({ success: false, error: 'Username is required' })
     await Accounts.create({ username })
-    var accounts = await Accounts.find();
+    var accounts = await Accounts.find({}, 'username');
     res.json({ success: true, accounts })
   } catch (e) {
     console.log(e)
@@ -167,7 +156,7 @@ const getAccount = async (req, res) => {
   try {
     var { id } = req.params
     if (!id) return res.status(400).json({ success: false, error: 'id is required' })
-    var account = await Accounts.findById(id);
+    var account = await Accounts.findById(id, 'username');
     res.json({ success: true, account })
   } catch (e) {
     console.log(e)
@@ -177,7 +166,7 @@ const getAccount = async (req, res) => {
 }
 const getAccounts = async (req, res) => {
   try {
-    var accounts = await Accounts.find();
+    var accounts = await Accounts.find({}, 'username');
     res.json({ success: true, accounts })
   } catch (e) {
     console.log(e)
@@ -234,6 +223,7 @@ const startManual = async (req, res) => {
 }
 const doAllBid = async () => {
   const accounts = await Accounts.find()
+  console.log('here')
   for (const account of accounts) {
     if (account?.auto)
       await bot(account._id);

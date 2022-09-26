@@ -21,7 +21,6 @@
     var username = ''
     $.get(`/api/account/${id}`, function (data, status) {
       if (data.success) {
-        console.log(data)
         document.querySelector('.username').innerHTML = `<p>${data.account.username}</p>`
         document.querySelector('.buttons').innerHTML =
           `<a class='button' href='/visits/${id}'>Visit History</p>
