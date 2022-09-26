@@ -46,7 +46,8 @@ const startBrowser = async (id) => {
   }
   const browser = await puppeteer.launch({ ...params, args });
   const page = await browser.newPage();
-  await page.authenticate({ username: proxy.username, password: proxy.password })
+  if (proxy && proxy.ip && proxy.port && proxy.type)
+    await page.authenticate({ username: proxy.username, password: proxy.password })
   return { page, browser };
 }
 
