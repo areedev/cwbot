@@ -105,6 +105,8 @@ const defineBudget = (type, budget) => {
       else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 200000
       else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 400000
       else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 750000
+      else if (budget == '12円') budgetValue = 12
+      else if (budget == '13円') budgetValue = 12
       else if ((budget.match(/円/g) || []).length == 1) budgetValue = parseFloat(budget.substring(0, budget.length - 1).replaceAll(/,/g, '')) / 1.1
       else budgetValue = 200000
     } else if (type == '時間単価制') {
