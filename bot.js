@@ -88,6 +88,7 @@ const getJobIdFromUrl = (url) => {
   return url.substring(url.lastIndexOf('/') + 1)
 }
 const defineBudget = (type, budget) => {
+  budget = budget.trim()
   var budgetValue = 0;
   if (budget == 'ワーカーと相談する') {
     if (type == '固定報酬制') {
@@ -101,10 +102,10 @@ const defineBudget = (type, budget) => {
       else if (budget.indexOf('5,000円  〜  10,000円') > -1) budgetValue = 8000
       else if (budget.indexOf('10,000円  〜  50,000円') > -1) budgetValue = 40000
       else if (budget.indexOf('50,000円  〜  100,000円') > -1) budgetValue = 80000
-      else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 260000
-      else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 450000
-      else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 800000
-      else if ((budget.match(/円/g) || []).length == 1) budgetValue = parseFloat(budget.substring(0, budget.length - 1))
+      else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 200000
+      else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 400000
+      else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 750000
+      else if ((budget.match(/円/g) || []).length == 1) budgetValue = parseFloat(budget.substring(0, budget.length - 1).replaceAll(/,/g, '')) / 1.1
       else budgetValue = 200000
     } else if (type == '時間単価制') {
       budgetValue = 3000
