@@ -24,7 +24,13 @@ router.get('/api/settings/stop/:id', app.stop)
 router.get('/api/visits/:limit/:page/:id', app.getVisits)
 router.post('/api/manual/start', app.startManual)
 router.post('/api/manual/toggle', app.toggleAuto)
+router.post('/api/manual/link/register', app.registerManualLink)
 router.get('/api/auto', app.getAuto)
+
+router.get('/api/proxy/all', app.getProxies)
+router.post('/api/proxy/add', app.addProxy)
+router.post('/api/proxy/edit', app.updateProxy)
+router.post('/api/proxy/delete', app.removeProxy)
 
 router.post('/webhook', app.firstpromoterWebhook)
 module.exports = router 

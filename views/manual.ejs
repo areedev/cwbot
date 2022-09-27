@@ -19,10 +19,14 @@
               <option value="sys">Sys</option>
               <option value="ec">Ec</option>
             </select>
+            <button class='button save'>Save</button>
             <button class='button start'>Start</button>
           </div>
           <button class='button auto'>Start Auto</button>
           <p class="time-notice"></p>
+          <div class="proxies">
+
+          </div>
         </div>
     </div>
 </body>
@@ -31,13 +35,88 @@
   referrerpolicy="no-referrer"></script>
 
 <script>
+  function updateProxy(_id) {
+    console.log('update proxy ' + _id)
+    var ip = document.querySelector(`.proxies .proxy-${_id} .ip`).value
+    var port = document.querySelector(`.proxies .proxy-${_id} .port`).value
+    var type = document.querySelector(`.proxies .proxy-${_id} .proxy_type`).value
+    var username = document.querySelector(`.proxies .proxy-${_id} .proxy_username`).value
+    var password = document.querySelector(`.proxies .proxy-${_id} .proxy_password`).value
+    $.post(`/api/proxy/edit`, { ip, port, type, username, password, _id }, function (data, status) {
+      console.log(data)
+      if (data.success) listProxies(data)
+    })
+  }
+  function removeProxy(_id) {
+    console.log('remove proxy' + _id)
+    $.post(`/api/proxy/delete`, { _id }, function (data, status) {
+      console.log(data)
+      if (data.success) listProxies(data)
+    })
+  }
+  function saveProxy() {
+    console.log('save proxy')
+    var ip = document.querySelector('.proxies #new .ip').value
+    var port = document.querySelector('.proxies #new .port').value
+    var type = document.querySelector('.proxies #new .proxy_type').value
+    var username = document.querySelector('.proxies #new .proxy_username').value
+    var password = document.querySelector('.proxies #new .proxy_password').value
+    $.post(`/api/proxy/add`, { ip, port, type, username, password }, function (data, status) { console.log(data); listProxies(data) })
+  }
+  function listProxies(data) {
+    console.log('list')
+    var proxies = document.querySelector('.proxies');
+    proxies.innerHTML = ''
+    for (var proxy of data.result) {
+      proxies.innerHTML += `
+        <div style="display: flex;" class="proxy-${proxy._id}" >
+          <p class="">ip</p><input class="ip" value="${proxy.ip}" />
+          <p class="">port</p><input class="port" value="${proxy.port}" />
+          <p class="">type</p><select class="proxy_type" value="${proxy.type}">
+            <option value="http" ${proxy.type == "http" ? 'selected' : ''}>HTTP</option>
+            <option value="https" ${proxy.type == "https" ? 'selected' : ''}>HTTPS</option>
+            <option value="socks4" ${proxy.type == "socks4" ? 'selected' : ''}>SOCKS4</option>
+            <option value="socks5" ${proxy.type == "socks5" ? 'selected' : ''}>SOCKS5</option>
+          </select>
+          <p class="">username</p><input class="proxy_username" value="${proxy.username}" />
+          <p class="">password</p><input type="password" class="proxy_password" value="${proxy.password}" />
+          <button class='update-proxy' onclick="updateProxy('${proxy._id}')" >Update Proxy</button>
+          <button class='delete-proxy' onclick="removeProxy('${proxy._id}')" >Delete Proxy</button>
+        </div>`
+    }
+    proxies.innerHTML += `
+        <div style="display: flex;" class="proxy" id='new'>
+          <p class="">ip</p><input class="ip"  />
+          <p class="">port</p><input class="port"  />
+          <p class="">type</p><select class="proxy_type" >
+            <option value="http">HTTP</option>
+            <option value="https">HTTPS</option>
+            <option value="socks4">SOCKS4</option>
+            <option value="socks5">SOCKS5</option>
+          </select>
+          <p class="">username</p><input class="proxy_username" />
+          <p class="">password</p><input type="password" class="proxy_password"  />
+          <button class='save-proxy' >Save Proxy</button>
+        </div>`
+    document.querySelector('.proxies #new .save-proxy').addEventListener('click', saveProxy)
+
+  }
   $(document).ready(function () {
     var tickTime, interval;
+
     function start() {
       var url = document.querySelector('.url').value
       var type = document.querySelector('.type').value
       console.log(type)
       $.post(`/api/manual/start`, { url, type }, function (data, status) {
+        console.log(data)
+      })
+    }
+    function save() {
+      var url = document.querySelector('.url').value
+      var type = document.querySelector('.type').value
+      console.log(type, url)
+      $.post(`/api/manual/link/register`, { url, type }, function (data, status) {
         console.log(data)
       })
     }
@@ -71,10 +150,14 @@
     }
 
 
+    $.get(`/api/proxy/all`, function (data, status) {
+      if (data.success) listProxies(data)
+    })
     $.get(`/api/auto`, function (data, status) {
       handleAuto(data)
     })
     document.querySelector('.button.start').addEventListener('click', start)
+    document.querySelector('.button.save').addEventListener('click', save)
     document.querySelector('.button.auto').addEventListener('click', toggleAuto)
 
   });

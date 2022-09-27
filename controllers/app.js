@@ -2,9 +2,11 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain } = require('../bot')
+const { bot, doCertain, delay } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
+const Manuallinks = require('../db/manuallinks')
+const Proxies = require('../db/proxies')
 var intervals = [];
 var interval = null;
 var tickTime;
@@ -85,7 +87,8 @@ const getSettings = async (req, res) => {
     const { auth, cookie, bids, proxy, auto } = account
     var tickTime = intervals.find(e => e.id == id) ? intervals.find(e => e.id == id).tickTime : null
     remainedTime = tickTime ? period / 1000 - moment().diff(tickTime, 'seconds') : period / 1000
-    res.status(200).send({ settings: { auth, cookie, bids, proxy, auto }, remainedTime })
+    const proxies = await Proxies.find()
+    res.status(200).send({ settings: { auth, cookie, bids, proxy, auto }, remainedTime, proxies })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -200,23 +203,50 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
+const doManual = async () => {
+  try {
+    var links = await Manuallinks.find({ processed: false });
+    while (links.length > 0) {
+      const link = links[0]
+      await doCertainBid(link.link, link.type);
+      await Manuallinks.findOneAndUpdate({ link: link.link, processed: false }, { processed: true })
+      links = await Manuallinks.find({ processed: false })
+    }
+    await Settings.findOneAndUpdate({ type: 'manual', sentence: 'stopped' })
+  } catch (e) {
+    console.log(e)
+  }
+}
 const doCertainBid = async (url, type) => {
   try {
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
     for (var account of accounts) {
       console.log('Doing account ' + account.username);
+      // await delay(1000)
       await doCertain(account._id, url, type);
     }
   } catch (e) {
     console.log(e)
   }
 }
+
 const startManual = async (req, res) => {
   try {
     const { url, type } = req.body
+    const link = await Manuallinks.findOne({ link: url, type })
+    if (!link)
+      await Manuallinks.create({ link: url, type, processed: false });
+    var manual = await Settings.findOne({ type: 'manual' });
+    if (manual && manual.sentence == 'running')
+      return res.json({ success: false, error: 'Already running' });
+    else if (!manual)
+      manual = await Settings.create({ type: 'manual', sentence: 'running' });
+    else
+      await Settings.findOneAndUpdate({ type: 'manual', sentence: 'running' });
     res.json({ success: true });
-    doCertainBid(url, type)
+    // doCertainBid(url, type)
+    doManual()
   } catch (e) {
     res.json({ success: false });
   }
@@ -276,6 +306,73 @@ const getAuto = async (req, res) => {
       res.json({ result: true, remainedTime })
   }
 }
+
+const registerManualLink = async (req, res) => {
+  try {
+    var link = await Manuallinks.findOne({ link: req.body.url, type: req.body.type })
+    if (link) {
+      res.json({ success: false, error: 'Already registered' })
+    } else {
+      link = await Manuallinks.create({ link: req.body.url, processed: false, type: req.body.type })
+      res.json({ success: true, result: link })
+    }
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const getProxies = async (req, res) => {
+  try {
+    var proxies = await Proxies.find()
+    res.json({ success: true, result: proxies })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const addProxy = async (req, res) => {
+  try {
+    var { ip, port, type, username, password } = req.body
+    console.log(req.body)
+    var proxy = await Proxies.findOne({ port, ip })
+    if (proxy) return res.json({ success: false, error: 'Ip and port already registered' });
+    proxy = await Proxies.create({ ip, port, type, username, password })
+    var proxies = await Proxies.find()
+    res.json({ success: true, result: proxies })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const updateProxy = async (req, res) => {
+  try {
+    console.log(req.body)
+    var { _id, ip, port, type, username, password } = req.body
+    var proxy = await Proxies.findById(_id)
+    if (!proxy) return res.json({ success: false, error: 'Invalid id' });
+    proxy = await Proxies.findByIdAndUpdate(_id, { ip, port, type, username, password })
+    var proxies = await Proxies.find()
+    res.json({ success: true, result: proxies })
+
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const removeProxy = async (req, res) => {
+  try {
+    var { _id } = req.body
+    var proxy = await Proxies.findById(_id)
+    if (!proxy) return res.json({ success: false, error: 'Invalid id' });
+    await Proxies.remove({ _id })
+    var proxies = await Proxies.find()
+    res.json({ success: true, result: proxies })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+
 const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
   res.json({});
@@ -305,5 +402,10 @@ module.exports = {
   once,
   toggleAuto,
   getAuto,
+  registerManualLink,
+  getProxies,
+  addProxy,
+  updateProxy,
+  removeProxy,
   firstpromoterWebhook
 }

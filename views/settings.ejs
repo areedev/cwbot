@@ -17,27 +17,8 @@
               <p class="">password</p>
               <input type="password" class="password" />
             </div>
-            <div>
-              <p>Proxy:</p>
-              <div style="display: flex;">
-                <p class="">ip</p>
-                <input class="ip" />
-                <p class="">port</p>
-                <input class="port" />
-                <p class="">type</p>
-                <select class="proxy_type">
-                  <option value="http">HTTP</option>
-                  <option value="https">HTTPS</option>
-                  <option value="socks4">SOCKS4</option>
-                  <option value="socks5">SOCKS5</option>
-                </select>
-              </div>
-              <div style="display: flex;">
-                <p class="">username</p>
-                <input class="proxy_username" />
-                <p class="">password</p>
-                <input type="password" class="proxy_password" />
-              </div>
+            <div class="proxies">
+
             </div>
             <div class="bids">
               <div style="display:flex; width: 100%;">
@@ -103,16 +84,14 @@
       var cookie = document.querySelector('.settings .cookie .cookie').value
       var username = document.querySelector('.settings .username').value
       var password = document.querySelector('.settings .password').value
-      var ip = document.querySelector('.settings .ip').value
-      var port = document.querySelector('.settings .port').value
-      var type = document.querySelector('.settings .proxy_type').value
-      var proxy_username = document.querySelector('.settings .proxy_username').value
-      var proxy_password = document.querySelector('.settings .proxy_password').value
+      var proxy = document.querySelector('.proxies select').value
+      // var ip = document.querySelector('.settings .ip').value
+      // var port = document.querySelector('.settings .port').value
+      // var type = document.querySelector('.settings .proxy_type').value
+      // var proxy_username = document.querySelector('.settings .proxy_username').value
+      // var proxy_password = document.querySelector('.settings .proxy_password').value
       $.post(`/api/settings/save`,
-        {
-          bids: { web, app, ec, sys }, cookie, auth: { username, password }, id, auto,
-          proxy: { ip, port, type, username: proxy_username, password: proxy_password }
-        },
+        { bids: { web, app, ec, sys }, cookie, auth: { username, password }, id, auto, proxy },
         function (data, status) {
           console.log(data)
         })
@@ -154,11 +133,11 @@
         document.querySelector('.settings .username').value = settings?.auth?.username || ''
         document.querySelector('.settings .password').value = settings?.auth?.password || ''
         document.querySelector('.settings .auto').checked = settings?.auto
-        document.querySelector('.settings .ip').value = settings?.proxy?.ip || ''
-        document.querySelector('.settings .port').value = settings?.proxy?.port || ''
-        document.querySelector('.settings .proxy_username').value = settings?.proxy?.username || ''
-        document.querySelector('.settings .proxy_password').value = settings?.proxy?.password || ''
-        document.querySelector('.settings .proxy_type').value = settings?.proxy?.type || 'http'
+        // document.querySelector('.settings .ip').value = settings?.proxy?.ip || ''
+        // document.querySelector('.settings .port').value = settings?.proxy?.port || ''
+        // document.querySelector('.settings .proxy_username').value = settings?.proxy?.username || ''
+        // document.querySelector('.settings .proxy_password').value = settings?.proxy?.password || ''
+        // document.querySelector('.settings .proxy_type').value = settings?.proxy?.type || 'http'
         const hours = Math.floor(remainedTime / 3600)
         const mins = Math.floor((remainedTime - hours * 3600) / 60)
         const seconds = remainedTime - hours * 3600 - mins * 60
@@ -171,6 +150,19 @@
           document.querySelector('.settings .buttons .button.start').classList.remove('disabled')
           document.querySelector('.settings .buttons .button.stop').classList.add('disabled')
         }
+
+        // Proxy
+
+        var proxyList = data.proxies
+        var proxies = document.querySelector('.proxies')
+        proxies.innerHTML += '<p>Proxy</p>'
+        var options = `<option ${!settings.proxy ? 'selected' : ''}>None</option>`
+        options += proxyList.map(e => `<option value=${e._id} ${e._id == settings.proxy ? 'selected' : ''}>${e.type + '://' + e.ip + ':' + e.port}</option>`)
+        proxies.innerHTML += `
+          <select value="${settings.proxy || ''}">
+            ${options}
+          </select>
+        `
       });
     }
   });

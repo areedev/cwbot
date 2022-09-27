@@ -6,7 +6,7 @@ var schema = mongoose.Schema({
   cookie: { type: String, default: '' },
   bids: { type: Object, default: undefined },
   auto: { type: Boolean, default: false },
-  proxy: { type: Object, default: undefined },
+  proxy: { type: mongoose.Types.ObjectId, ref: 'proxies' },
   status: { type: String, default: 'stopped' },
 });
 

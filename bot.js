@@ -21,7 +21,7 @@ const delay = (time) => {
 }
 
 const startBrowser = async (id) => {
-  const { proxy } = await Accounts.findById(id)
+  const { proxy } = await Accounts.findById(id).populate('proxy')
   console.log('Opening browser...')
   // var params = {
   //   headless: false,
@@ -41,12 +41,12 @@ const startBrowser = async (id) => {
     '--ignore-certificate-errors',
     '--ignore-certificate-errors-spki-list'
   ]
-  if (proxy && proxy.ip && proxy.port && proxy.type) {
+  if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
   }
   const browser = await puppeteer.launch({ ...params, args });
   const page = await browser.newPage();
-  if (proxy && proxy.ip && proxy.port && proxy.type)
+  if (proxy)
     await page.authenticate({ username: proxy.username, password: proxy.password })
   return { page, browser };
 }
@@ -233,4 +233,4 @@ const doCertain = async (id, url, type) => {
   console.log('Browser closed...')
 }
 
-module.exports = { bot, doCertain }
+module.exports = { bot, doCertain, delay }
