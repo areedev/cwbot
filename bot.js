@@ -22,11 +22,10 @@ const delay = (time) => {
 
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id).populate('proxy')
-  console.log('Opening browser...')
   // var params = {
-  //   headless: false,
-  //   defaultViewport: null
-  // }
+    //   headless: false,
+    //   defaultViewport: null
+    // }
   // var args = ['--start-maximized']
   var params = {
     defaultViewport: null,
@@ -43,6 +42,9 @@ const startBrowser = async (id) => {
   ]
   if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
+    console.log(`Opening browser using proxy ${proxy.type}://${proxy.ip}:${proxy.port}...`)
+  } else {
+    console.log(`Opening browser without proxy...`)
   }
   const browser = await puppeteer.launch({ ...params, args });
   const page = await browser.newPage();

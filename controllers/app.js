@@ -73,10 +73,12 @@ const getVisits = async (req, res) => {
 }
 const saveSettings = async (req, res) => {
   try {
-    const { id, auto, proxy, bids, auth, cookie } = req.body
+    var { id, auto, proxy, bids, auth, cookie } = req.body
+    if (proxy == 'null') proxy = null
     await Accounts.findByIdAndUpdate(id, { auto, proxy, bids, cookie, auth })
     res.status(200).send({ success: true })
   } catch (e) {
+    console.log(e)
     res.status(400).json({ error: e.message })
   }
 }
@@ -84,7 +86,7 @@ const getSettings = async (req, res) => {
   try {
     const { id } = req.params
     const account = await Accounts.findById(id)
-    const { auth, cookie, bids, proxy, auto } = account
+    var { auth, cookie, bids, proxy, auto } = account
     var tickTime = intervals.find(e => e.id == id) ? intervals.find(e => e.id == id).tickTime : null
     remainedTime = tickTime ? period / 1000 - moment().diff(tickTime, 'seconds') : period / 1000
     const proxies = await Proxies.find()

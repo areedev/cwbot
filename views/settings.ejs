@@ -156,7 +156,7 @@
         var proxyList = data.proxies
         var proxies = document.querySelector('.proxies')
         proxies.innerHTML += '<p>Proxy</p>'
-        var options = `<option ${!settings.proxy ? 'selected' : ''}>None</option>`
+        var options = `<option value=${null} ${!settings.proxy ? 'selected' : ''}>None</option>`
         options += proxyList.map(e => `<option value=${e._id} ${e._id == settings.proxy ? 'selected' : ''}>${e.type + '://' + e.ip + ':' + e.port}</option>`)
         proxies.innerHTML += `
           <select value="${settings.proxy || ''}">
