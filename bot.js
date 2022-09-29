@@ -23,9 +23,9 @@ const delay = (time) => {
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id).populate('proxy')
   // var params = {
-    //   headless: false,
-    //   defaultViewport: null
-    // }
+  //   headless: false,
+  //   defaultViewport: null
+  // }
   // var args = ['--start-maximized']
   var params = {
     defaultViewport: null,
@@ -98,19 +98,22 @@ const defineBudget = (type, budget) => {
     }
   } else {
     if (type == '固定報酬制') {
-      if (budget.indexOf('〜  5,000円') > -1) budgetValue = 4000
-      else if (budget.indexOf('5,000円  〜  10,000円') > -1) budgetValue = 8000
-      else if (budget.indexOf('10,000円  〜  50,000円') > -1) budgetValue = 40000
+      if (budget.indexOf('〜  5,000円') > -1) /* budgetValue = 4000 */ budgetValue = 0
+      else if (budget.indexOf('5,000円  〜  10,000円') > -1) /* budgetValue = 8000 */ budgetValue = 0
+      else if (budget.indexOf('10,000円  〜  50,000円') > -1) /*budgetValue = 40000 */ budgetValue = 0
       else if (budget.indexOf('50,000円  〜  100,000円') > -1) budgetValue = 80000
       else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 200000
       else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 400000
       else if (budget.indexOf('500,000円  〜  1,000,000円') > -1) budgetValue = 750000
       else if (budget == '12円') budgetValue = 12
       else if (budget == '13円') budgetValue = 12
-      else if ((budget.match(/円/g) || []).length == 1) budgetValue = parseFloat(budget.substring(0, budget.length - 1).replaceAll(/,/g, '')) / 1.1
+      else if ((budget.match(/円/g) || []).length == 1) {
+        budgetValue = parseFloat(budget.substring(0, budget.length - 1).replaceAll(/,/g, '')) / 1.1
+        if (budgetValue < 70000) budgetValue = 0
+      }
       else budgetValue = 200000
     } else if (type == '時間単価制') {
-      budgetValue = 3000
+      budgetValue = 1500
     }
   }
   return budgetValue;
@@ -151,6 +154,11 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
           e => e.innerHTML.trim())
       });
       const budgetValue = defineBudget(type, budget);
+      if (budgetValue == 0) {
+        await Visits.create({ link, time: Date.now(), account: id });
+        console.log('Skipping because of low budget...')
+        return;
+      }
       console.log(type, budget, budgetValue);
       var amtEl, bidEl, sendBtn;
       do {
