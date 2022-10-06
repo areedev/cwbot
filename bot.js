@@ -100,7 +100,7 @@ const defineBudget = (type, budget) => {
     if (type == '固定報酬制') {
       if (budget.indexOf('〜  5,000円') > -1) /* budgetValue = 4000 */ budgetValue = 0
       else if (budget.indexOf('5,000円  〜  10,000円') > -1) /* budgetValue = 8000 */ budgetValue = 0
-      else if (budget.indexOf('10,000円  〜  50,000円') > -1) /*budgetValue = 40000 */ budgetValue = 0
+      else if (budget.indexOf('10,000円  〜  50,000円') > -1) budgetValue = 40000 /* budgetValue = 0*/
       else if (budget.indexOf('50,000円  〜  100,000円') > -1) budgetValue = 80000
       else if (budget.indexOf('100,000円  〜  300,000円') > -1) budgetValue = 200000
       else if (budget.indexOf('300,000円  〜  500,000円') > -1) budgetValue = 400000
