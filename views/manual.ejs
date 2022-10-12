@@ -19,8 +19,13 @@
               <option value="sys">Sys</option>
               <option value="ec">Ec</option>
             </select>
+
             <button class='button save'>Save</button>
             <button class='button start'>Start</button>
+          </div>
+          <div style="display: flex;">
+            <input placeholder="id" class="badclient" style="width: 600px;" />
+            <button class='button addclient'>Add Bad Client</button>
           </div>
           <button class='button auto'>Start Auto</button>
           <p class="time-notice"></p>
@@ -148,6 +153,12 @@
         handleAuto(data)
       })
     }
+    function addBadClient() {
+      var id = document.querySelector('input.badclient').value
+      $.post(`/api/manual/addbadclient`, { id }, function (data, status) {
+        console.log(data)
+      })
+    }
 
 
     $.get(`/api/proxy/all`, function (data, status) {
@@ -159,6 +170,7 @@
     document.querySelector('.button.start').addEventListener('click', start)
     document.querySelector('.button.save').addEventListener('click', save)
     document.querySelector('.button.auto').addEventListener('click', toggleAuto)
+    document.querySelector('.button.addclient').addEventListener('click', addBadClient)
 
   });
 </script>

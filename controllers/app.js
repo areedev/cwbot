@@ -6,6 +6,7 @@ const { bot, doCertain, delay } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 const Manuallinks = require('../db/manuallinks')
+const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
 var intervals = [];
 var interval = null;
@@ -232,7 +233,16 @@ const doCertainBid = async (url, type) => {
     console.log(e)
   }
 }
-
+const addBadClient = async (req, res) => {
+  try {
+    var { id } = req.body
+    var bc = await BadClients.findOne({ id })
+    if (!bc) bc = await BadClients.create({ id })
+    res.json({ success: true, result: bc })
+  } catch (e) {
+    res.json({ success: false });
+  }
+}
 const startManual = async (req, res) => {
   try {
     const { url, type } = req.body
@@ -409,5 +419,6 @@ module.exports = {
   addProxy,
   updateProxy,
   removeProxy,
-  firstpromoterWebhook
+  firstpromoterWebhook,
+  addBadClient
 }

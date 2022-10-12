@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer-extra');
 const Visits = require('./db/visits')
 const moment = require('moment');
 const Accounts = require('./db/accounts');
+const BadClients = require('./db/badclients')
 
 const loginUrl = 'https://crowdworks.jp/login?ref=toppage_hedder'
 
@@ -208,12 +209,23 @@ const goJobsPage = async (page, id, type) => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .item_title a[href]'),
         a => a.getAttribute('href').substring(a.getAttribute('href').lastIndexOf('/') + 1))
     });
+    const clients = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .client-information .user-name a[href]'),
+        a => a.getAttribute('href').substring(a.getAttribute('href').lastIndexOf('/') + 1))
+    });
     console.log(`Doing ${type} bid...\n${data.length} links fetched...`)
     var cnt = data.length;
     const { bids } = await Accounts.findById(id, 'bids');
-
-    for (var jobId of data) {
+    var badclients = await BadClients.find();
+    badclients = badclients.map(e => e.id);
+    for (var i = 0; i < cnt; i++) {
+      var jobId = data[i]
+      var clientId = clients[i]
       console.log(`${cnt} links remained...`);
+      if (badclients.indexOf(clientId) >= 0) {
+        console.log('https://crowdworks.jp/proposals/new?job_offer_id=' + jobId);
+        console.log(`Skipping because of bad client...`); continue;
+      }
       await sendProp(page, jobId, id, bids[type]);
       cnt--;
     }
