@@ -221,15 +221,14 @@ const goJobsPage = async (page, id, type) => {
     for (var i = 0; i < cnt; i++) {
       var jobId = data[i]
       var clientId = clients[i]
-      console.log(`${cnt} links remained...`);
+      console.log(`${cnt - i} links remained...`);
       if (badclients.indexOf(clientId) >= 0) {
         console.log('https://crowdworks.jp/proposals/new?job_offer_id=' + jobId);
         console.log(`Skipping because of bad client...`);
-		cnt--;
-		continue;
+        continue;
+      } else {
+        await sendProp(page, jobId, id, bids[type]);
       }
-      await sendProp(page, jobId, id, bids[type]);
-      cnt--;
     }
   } catch (e) {
     console.log(e)
