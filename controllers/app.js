@@ -94,8 +94,7 @@ const once = async (req, res) => {
   try {
     var { id } = req.params
     const account = await Accounts.findById(id);
-    console.log(account);
-    if (account?.blocked === true) return res.join({ success: false, error: 'Blocked account.' })
+    if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
     bot(id)
     res.status(200).send('success')
   } catch (e) {
