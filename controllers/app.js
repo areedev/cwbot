@@ -94,7 +94,8 @@ const once = async (req, res) => {
   try {
     var { id } = req.params
     const account = await Accounts.findById(id);
-    if (account?.blocked === false) return res.join({ success: false, error: 'Blocked account.' })
+    console.log(account);
+    if (account?.blocked === true) return res.join({ success: false, error: 'Blocked account.' })
     bot(id)
     res.status(200).send('success')
   } catch (e) {
@@ -269,7 +270,7 @@ const doCertainBid = async (url, type) => {
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
     for (var account of accounts) {
-      if (account?.blocked === false) {
+      if (account?.blocked === true) {
         console.log(`Skipping blocked account ${account.username}`);
         continue;
       }
