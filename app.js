@@ -33,7 +33,7 @@ const interval = 3600000
 
 server.listen(8000)
 server.on('listening', () => {
-  console.log('Listening on 8080')
+  console.log('Listening on 8000')
 })
 server.on('error', onError)
 

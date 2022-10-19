@@ -15,7 +15,7 @@ var period = 5400000
 // var period = 5000
 
 
-const index = async (req, res, next) => {
+const auth = async (req, res, next) => {
   var { cookie } = req.headers
   if (cookie) {
     var output = {};
@@ -28,23 +28,13 @@ const index = async (req, res, next) => {
       if (payload._id) {
         const user = await Users.findById(payload._id)
         if (user) {
-          if (req.url == '/')
-            return res.render('index')
-          else {
-            req.body.user = user;
-            return next()
-          }
+          req.body.user = user;
+          return next()
         }
       }
     }
   }
-  if (req.url == '/login')
-    return res.render('login')
-  else if (req.url.indexOf('api') >= 0) {
-    return res.status(400).json({ success: false, error: 'Invalid user' })
-  }
-  else
-    return res.redirect('/login')
+  return res.json({ success: false, error: 'Invalid user' })
 }
 const login = (req, res) => {
   return res.render('login')
@@ -162,8 +152,9 @@ const getAccount = async (req, res) => {
   try {
     var { id } = req.params
     if (!id) return res.status(400).json({ success: false, error: 'id is required' })
-    var account = await Accounts.findById(id, 'username');
-    res.json({ success: true, account })
+    var account = await Accounts.findById(id);
+    const proxies = await Proxies.find();
+    res.json({ success: true, result: { account, proxies } })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -179,10 +170,61 @@ const getAccounts = async (req, res) => {
     res.status(400).json({ error: e.message })
   }
 }
+const saveCredentials = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { auth: req.body.auth })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const saveProxy = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { proxy: req.body.proxy })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const setAuto = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { auto: req.body.auto })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const saveBids = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { bids: req.body.bids })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const makeBlocked = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { blocked: true })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
 
 const doLogin = async (req, res) => {
   try {
     const { username, password } = req.body
+    console.log(username, password)
     var user = await Users.findOne({ username, password })
     if (user) {
       var token = jwt.encode({ _id: user._id }, '12345678')
@@ -333,6 +375,17 @@ const registerManualLink = async (req, res) => {
     res.json({ success: false })
   }
 }
+const getPublicSettings = async (req, res) => {
+  try {
+    var proxies = await Proxies.find()
+    var badClients = await BadClients.find();
+    var manualLinks = await Manuallinks.find();
+    res.json({ success: true, result: { proxies, badClients, manualLinks } })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 const getProxies = async (req, res) => {
   try {
     var proxies = await Proxies.find()
@@ -373,10 +426,10 @@ const updateProxy = async (req, res) => {
 }
 const removeProxy = async (req, res) => {
   try {
-    var { _id } = req.body
+    var { _id } = req.params
     var proxy = await Proxies.findById(_id)
     if (!proxy) return res.json({ success: false, error: 'Invalid id' });
-    await Proxies.remove({ _id })
+    await Proxies.deleteOne({ _id })
     var proxies = await Proxies.find()
     res.json({ success: true, result: proxies })
   } catch (e) {
@@ -392,7 +445,7 @@ const firstpromoterWebhook = async (req, res) => {
 
 init()
 module.exports = {
-  index,
+  auth,
   login,
   account,
   visits,
@@ -420,5 +473,11 @@ module.exports = {
   updateProxy,
   removeProxy,
   firstpromoterWebhook,
-  addBadClient
+  addBadClient,
+  saveCredentials,
+  saveProxy,
+  setAuto,
+  makeBlocked,
+  saveBids,
+  getPublicSettings
 }
