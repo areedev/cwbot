@@ -185,7 +185,8 @@ const saveCredentials = async (req, res) => {
 const saveProxy = async (req, res) => {
   try {
     var { id } = req.params
-    await Accounts.findByIdAndUpdate(id, { proxy: req.body.proxy })
+    var proxy = req.body.proxy == 'none' ? null : req.body.proxy
+    await Accounts.findByIdAndUpdate(id, { proxy: proxy })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
