@@ -175,7 +175,7 @@ const getAccounts = async (req, res) => {
 const saveCredentials = async (req, res) => {
   try {
     var { id } = req.params
-    await Accounts.findByIdAndUpdate(id, { auth: req.body.auth })
+    await Accounts.findByIdAndUpdate(id, { auth: req.body.auth, username: req.body.username })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
