@@ -22,6 +22,8 @@ router.post('/api/admin/settings/badclient', app.addBadClient)
 router.post('/api/admin/settings/manual/register', app.registerManualLink)
 router.post('/api/admin/settings/manual/start', app.startManual)
 router.post('/api/admin/settings/manual/mark/:id', app.markManualLink)
+router.post('/api/admin/settings/keyword/add', app.addKeyword)
+router.delete('/api/admin/settings/keyword/:id', app.deleteKeyword)
 
 
 router.get('/login', app.login)

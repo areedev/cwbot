@@ -6,6 +6,7 @@ const { bot, doCertain, delay } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 const Manuallinks = require('../db/manuallinks')
+const Keywords = require('../db/keywords')
 const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
 var intervals = [];
@@ -397,12 +398,35 @@ const markManualLink = async (req, res) => {
     res.json({ success: false })
   }
 }
+const deleteKeyword = async (req, res) => {
+  try {
+    var keyword = await Keywords.findById(req.params.id);
+    if (!keyword) return res.json({ success: false, error: 'Invalid keyword id' })
+    await Keywords.deleteOne({ _id: req.params.id });
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const addKeyword = async (req, res) => {
+  try {
+    var keyword = await Keywords.findOne({ keyword: req.body.keyword });
+    if (keyword) return res.json({ success: false, error: 'Already registered' })
+    keyword = await Keywords.create({ keyword: req.body.keyword, createdAt: moment.now() });
+    res.json({ success: true, result: keyword })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 const getPublicSettings = async (req, res) => {
   try {
     var proxies = await Proxies.find()
     var badClients = await BadClients.find();
     var manualLinks = await Manuallinks.find().sort([['createdAt', -1]]);
-    res.json({ success: true, result: { proxies, badClients, manualLinks } })
+    var keywords = await Keywords.find().sort([['createdAt', -1]]);
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -502,5 +526,7 @@ module.exports = {
   makeBlocked,
   saveBids,
   getPublicSettings,
-  markManualLink
+  markManualLink,
+  addKeyword,
+  deleteKeyword
 }

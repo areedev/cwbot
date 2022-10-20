@@ -154,6 +154,8 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
         return Array.from(document.querySelectorAll('.post_block > .description'),
           e => e.innerHTML.trim())
       });
+      const title = await page.evaluate(() => document.querySelector('.title_container.title_simple a').innerHTML.trim())
+      console.log(title);
       const budgetValue = defineBudget(type, budget);
       if (budgetValue == 0) {
         await Visits.create({ link, time: Date.now(), account: id });
