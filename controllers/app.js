@@ -300,7 +300,7 @@ const startManual = async (req, res) => {
   try {
     const { url, type, interval, ids } = req.body
     var link = await Manuallinks.findOne({ link: url, type })
-    if (!link)
+    if (!link && url)
       link = await Manuallinks.create({ link: url, type, processed: false, createdAt: moment.now() });
     var manual = await Settings.findOne({ type: 'manual' });
     if (manual && manual.sentence == 'running')
@@ -377,7 +377,7 @@ const registerManualLink = async (req, res) => {
     var link = await Manuallinks.findOne({ link: req.body.url, type: req.body.type })
     if (link) {
       res.json({ success: false, error: 'Already registered' })
-    } else {
+    } else if (req.body.url) {
       link = await Manuallinks.create({ link: req.body.url, processed: false, type: req.body.type, createdAt: moment.now() })
       res.json({ success: true, result: link })
     }
