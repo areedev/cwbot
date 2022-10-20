@@ -240,14 +240,15 @@ const doLogin = async (req, res) => {
     res.status(400).json({ error: e.message })
   }
 }
+
 const doLoginjwt = async (req, res) => {
-  console.log('doing login', req.body.user)
   res.json({ success: true })
 }
+
 const logout = async (req, res) => {
-  console.log('doing logout', req.body.user)
   res.cookie('token', '').json({ success: true })
 }
+
 const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
@@ -528,5 +529,5 @@ module.exports = {
   getPublicSettings,
   markManualLink,
   addKeyword,
-  deleteKeyword
+  deleteKeyword,
 }
