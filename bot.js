@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer-extra');
 const Visits = require('./db/visits')
 const moment = require('moment');
 const Accounts = require('./db/accounts');
-const BadClients = require('./db/badclients')
+const BadClients = require('./db/badclients');
+const Keywords = require('./db/keywords');
 
 const loginUrl = 'https://crowdworks.jp/login?ref=toppage_hedder'
 
@@ -154,8 +155,13 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
         return Array.from(document.querySelectorAll('.post_block > .description'),
           e => e.innerHTML.trim())
       });
-      const title = await page.evaluate(() => document.querySelector('.title_container.title_simple a').innerHTML.trim())
+      const title = await page.evaluate(() => document.querySelector('.title_container.title_simple a').innerHTML.trim());
       console.log(title);
+      const keywords = await Keywords.find();
+      for (const k of keywords) {
+        if (title.indexOf(k.keyword) >= 0)
+          return console.log(`Skipping because of keword ${k.keyword}`);
+      }
       const budgetValue = defineBudget(type, budget);
       if (budgetValue == 0) {
         await Visits.create({ link, time: Date.now(), account: id });
