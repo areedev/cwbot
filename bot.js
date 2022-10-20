@@ -23,16 +23,16 @@ const delay = (time) => {
 
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id).populate('proxy')
-  var params = {
-    headless: false,
-    defaultViewport: null
-  }
-  var args = ['--start-maximized']
   // var params = {
-  //   defaultViewport: null,
-  //   headless: true,
-  //   devtools: false,
+  //   headless: false,
+  //   defaultViewport: null
   // }
+  // var args = ['--start-maximized']
+  var params = {
+    defaultViewport: null,
+    headless: true,
+    devtools: false,
+  }
   var args = [
     '--disable-gpu',
     '--disable-dev-shm-usage',
