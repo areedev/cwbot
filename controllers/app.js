@@ -251,12 +251,12 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
-const doManual = async () => {
+const doManual = async (interval, ids) => {
   try {
     var links = await Manuallinks.find({ processed: false });
     while (links.length > 0) {
       const link = links[0]
-      await doCertainBid(link.link, link.type);
+      await doCertainBid(link.link, link.type, interval, ids);
       await Manuallinks.findOneAndUpdate({ link: link.link, processed: false }, { processed: true })
       links = await Manuallinks.find({ processed: false })
     }
@@ -265,18 +265,22 @@ const doManual = async () => {
     console.log(e)
   }
 }
-const doCertainBid = async (url, type) => {
+const doCertainBid = async (url, type, interval, ids) => {
   try {
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
     for (var account of accounts) {
+      if (ids.length != 0) {
+        if (ids.findIndex(e => e.toString() == account._id.toString()) < 0) continue;
+      }
       if (account?.blocked === true) {
         console.log(`Skipping blocked account ${account.username}`);
         continue;
       }
       console.log('Doing account ' + account.username);
-      // await delay(1000)
       await doCertain(account._id, url, type);
+      console.log('Waiting for ' + interval + 'mins...');
+      await delay(interval * 60 * 1000)
     }
   } catch (e) {
     console.log(e)
@@ -294,10 +298,10 @@ const addBadClient = async (req, res) => {
 }
 const startManual = async (req, res) => {
   try {
-    const { url, type } = req.body
-    const link = await Manuallinks.findOne({ link: url, type })
+    const { url, type, interval, ids } = req.body
+    var link = await Manuallinks.findOne({ link: url, type })
     if (!link)
-      await Manuallinks.create({ link: url, type, processed: false });
+      link = await Manuallinks.create({ link: url, type, processed: false, createdAt: moment.now() });
     var manual = await Settings.findOne({ type: 'manual' });
     if (manual && manual.sentence == 'running')
       return res.json({ success: false, error: 'Already running' });
@@ -305,9 +309,9 @@ const startManual = async (req, res) => {
       manual = await Settings.create({ type: 'manual', sentence: 'running' });
     else
       await Settings.findOneAndUpdate({ type: 'manual', sentence: 'running' });
-    res.json({ success: true });
+    res.json({ success: true, result: link });
     // doCertainBid(url, type)
-    doManual()
+    doManual(interval, ids)
   } catch (e) {
     res.json({ success: false });
   }
@@ -374,9 +378,20 @@ const registerManualLink = async (req, res) => {
     if (link) {
       res.json({ success: false, error: 'Already registered' })
     } else {
-      link = await Manuallinks.create({ link: req.body.url, processed: false, type: req.body.type })
+      link = await Manuallinks.create({ link: req.body.url, processed: false, type: req.body.type, createdAt: moment.now() })
       res.json({ success: true, result: link })
     }
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const markManualLink = async (req, res) => {
+  try {
+    var link = await Manuallinks.findById(req.params.id);
+    link.processed = req.body.processed;
+    await link.save();
+    res.json({ success: true, result: link })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -386,7 +401,7 @@ const getPublicSettings = async (req, res) => {
   try {
     var proxies = await Proxies.find()
     var badClients = await BadClients.find();
-    var manualLinks = await Manuallinks.find();
+    var manualLinks = await Manuallinks.find().sort([['createdAt', -1]]);
     res.json({ success: true, result: { proxies, badClients, manualLinks } })
   } catch (e) {
     console.log(e)
@@ -486,5 +501,6 @@ module.exports = {
   setAuto,
   makeBlocked,
   saveBids,
-  getPublicSettings
+  getPublicSettings,
+  markManualLink
 }

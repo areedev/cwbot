@@ -21,6 +21,7 @@ router.post('/api/admin/settings/proxy/add', app.addProxy)
 router.post('/api/admin/settings/badclient', app.addBadClient)
 router.post('/api/admin/settings/manual/register', app.registerManualLink)
 router.post('/api/admin/settings/manual/start', app.startManual)
+router.post('/api/admin/settings/manual/mark/:id', app.markManualLink)
 
 
 router.get('/login', app.login)
