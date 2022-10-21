@@ -26,24 +26,5 @@ router.post('/api/admin/settings/manual/mark/:id', app.markManualLink)
 router.post('/api/admin/settings/keyword/add', app.addKeyword)
 router.delete('/api/admin/settings/keyword/:id', app.deleteKeyword)
 
-
-router.get('/login', app.login)
-router.get('/visits/:id?', app.visits)
-router.get('/settings/:id?', app.settings)
-router.get('/register', app.register)
-router.get('/manual', app.manual)
-// router.get('/:id', app.account)
-
-
-router.get('/api/logout', app.logout)
-router.post('/api/settings/save', app.saveSettings)
-router.get('/api/settings/:id', app.getSettings)
-router.get('/api/settings/start/:id', app.start)
-router.get('/api/settings/stop/:id', app.stop)
-router.get('/api/visits/:limit/:page/:id', app.getVisits)
-router.post('/api/manual/toggle', app.toggleAuto)
-router.get('/api/auto', app.getAuto)
-
-
 router.post('/webhook', app.firstpromoterWebhook)
 module.exports = router 
