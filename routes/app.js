@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var app = require('../controllers/app')
+router.post('/api/admin/startlocalchrome', app.startLocalChrome)
 router.post('/api/admin/login', app.doLogin)
 router.use('/api/admin', app.auth)
 router.get('/api/admin/loginjwt', app.doLoginjwt)

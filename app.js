@@ -10,6 +10,7 @@ const http = require('http')
 app.set('port', 8000)
 const server = http.createServer(app)
 const mongoose = require('mongoose');
+var cors = require('cors')
 const { bot } = require('./bot')
 const dbConfig = require('./db/config')
 mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -17,6 +18,8 @@ mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: t
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+var corsOptions = { origin: '*', optionsSuccessStatus: 200 }
+app.use(cors(corsOptions));
 app.use(logger('dev'));
 app.use(bodyParser.json({ limit: '50mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));

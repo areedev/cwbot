@@ -1,8 +1,10 @@
+const puppeteer = require('puppeteer-extra');
+
 var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain, delay } = require('../bot')
+const { bot, doCertain, delay, startLocalAccount } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 const Manuallinks = require('../db/manuallinks')
@@ -458,7 +460,6 @@ const addProxy = async (req, res) => {
 }
 const updateProxy = async (req, res) => {
   try {
-    console.log(req.body)
     var { _id, ip, port, type, username, password } = req.body
     var proxy = await Proxies.findById(_id)
     if (!proxy) return res.json({ success: false, error: 'Invalid id' });
@@ -489,7 +490,16 @@ const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
   res.json({});
 }
-
+const startLocalChrome = async (req, res) => {
+  try {
+    const { proxy, auth, chrome } = req.body
+    startLocalAccount(proxy, auth, chrome);
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
 init()
 module.exports = {
   auth,
@@ -530,4 +540,5 @@ module.exports = {
   markManualLink,
   addKeyword,
   deleteKeyword,
+  startLocalChrome
 }

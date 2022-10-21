@@ -21,43 +21,37 @@ const delay = (time) => {
     setTimeout(resolve, time);
   })
 }
+const startBrowserWithProxy = async (proxy, params = {
+  defaultViewport: null,
+  headless: true,
+  devtools: false,
+}, args = [
+  '--disable-gpu',
+  '--disable-dev-shm-usage',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--ignore-certificate-errors',
+  '--ignore-certificate-errors-spki-list'
+], executablePath = '') => {
 
-const startBrowser = async (id) => {
-  const { proxy } = await Accounts.findById(id).populate('proxy')
-  // var params = {
-  //   headless: false,
-  //   defaultViewport: null
-  // }
-  // var args = ['--start-maximized']
-  var params = {
-    defaultViewport: null,
-    headless: true,
-    devtools: false,
-  }
-  var args = [
-    '--disable-gpu',
-    '--disable-dev-shm-usage',
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--ignore-certificate-errors',
-    '--ignore-certificate-errors-spki-list'
-  ]
   if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
     console.log(`Opening browser using proxy ${proxy.type}://${proxy.ip}:${proxy.port}...`)
   } else {
     console.log(`Opening browser without proxy...`)
   }
-  const browser = await puppeteer.launch({ ...params, args });
+  const browser = await puppeteer.launch({ ...params, args, executablePath });
   const page = await browser.newPage();
   if (proxy)
     await page.authenticate({ username: proxy.username, password: proxy.password })
   return { page, browser };
 }
-
-const doLogin = async (page, id) => {
+const startBrowser = async (id) => {
+  const { proxy } = await Accounts.findById(id).populate('proxy');
+  return startBrowserWithProxy(proxy);
+}
+const doLoginWithAuth = async (page, auth) => {
   try {
-    var { auth } = await Accounts.findById(id, 'auth')
     var { username, password } = auth
     if (!username || !password) {
       console.log('Username and password is empty.');
@@ -85,6 +79,10 @@ const doLogin = async (page, id) => {
   } catch (e) {
     console.log('Error in login...', e)
   }
+}
+const doLogin = async (page, id) => {
+  var { auth } = await Accounts.findById(id, 'auth')
+  doLoginWithAuth(page, auth);
 }
 const getJobIdFromUrl = (url) => {
   return url.substring(url.lastIndexOf('/') + 1)
@@ -267,4 +265,14 @@ const doCertain = async (id, url, type) => {
   console.log('Browser closed...')
 }
 
-module.exports = { bot, doCertain, delay }
+const startLocalAccount = async (proxy, auth, chrome) => {
+  var params = {
+    headless: false,
+    defaultViewport: null
+  }
+  var args = ['--start-maximized']
+  var executablePath = chrome ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : ''
+  const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
+  doLoginWithAuth(page, auth);
+}
+module.exports = { bot, doCertain, delay, startLocalAccount }
