@@ -48,7 +48,7 @@ const startBrowserWithProxy = async (proxy, params = {
 }
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id).populate('proxy');
-  return startBrowserWithProxy(proxy);
+  return  await startBrowserWithProxy(proxy);
 }
 const doLoginWithAuth = async (page, auth) => {
   try {
@@ -82,7 +82,7 @@ const doLoginWithAuth = async (page, auth) => {
 }
 const doLogin = async (page, id) => {
   var { auth } = await Accounts.findById(id, 'auth')
-  doLoginWithAuth(page, auth);
+  await doLoginWithAuth(page, auth);
 }
 const getJobIdFromUrl = (url) => {
   return url.substring(url.lastIndexOf('/') + 1)
