@@ -9,6 +9,8 @@ const moment = require('moment')
 const jwt = require('jwt-simple')
 const Manuallinks = require('../db/manuallinks')
 const Keywords = require('../db/keywords')
+const Categories = require('../db/category')
+const Words = require('../db/dictionary')
 const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
 var intervals = [];
@@ -423,13 +425,42 @@ const addKeyword = async (req, res) => {
     res.json({ success: false })
   }
 }
+const addCategory = async (req, res) => {
+  try {
+    var category = await Categories.findOne({ name: req.body.category });
+    if (category) return res.json({ success: false, error: 'Already registered' })
+    category = await Categories.create({ name: req.body.category, createdAt: moment.now() });
+    res.json({ success: true, result: category })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const addWord = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { word, category } = req.body
+    if (id) {
+      var dic = await Words.findByIdAndUpdate(id, { word: word.word, translated: word.translated, category })
+      res.json({ success: true, result: dic })
+    } else {
+      var dic = await Words.create({ word: word.word, translated: word.translated, category, createdAt: moment.now() });
+      res.json({ success: true, result: dic })
+    }
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 const getPublicSettings = async (req, res) => {
   try {
     var proxies = await Proxies.find()
     var badClients = await BadClients.find();
     var manualLinks = await Manuallinks.find().sort([['createdAt', -1]]);
     var keywords = await Keywords.find().sort([['createdAt', -1]]);
-    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords } })
+    var categories = await Categories.find();
+    var words = await Words.find().sort([['createdAt', -1]]);
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -540,5 +571,7 @@ module.exports = {
   markManualLink,
   addKeyword,
   deleteKeyword,
+  addCategory,
+  addWord,
   startLocalChrome
 }
