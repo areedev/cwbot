@@ -27,7 +27,7 @@ router.post('/api/admin/settings/manual/mark/:id', app.markManualLink)
 router.post('/api/admin/settings/keyword/add', app.addKeyword)
 router.delete('/api/admin/settings/keyword/:id', app.deleteKeyword)
 router.post('/api/admin/settings/dictionary/category/add', app.addCategory)
-router.post('/api/admin/settings/dictionary/word/add/:id', app.addWord)
+router.post('/api/admin/settings/dictionary/word/add/:id?', app.addWord)
 // router.post('/api/admin/settings/dictionary/word/edit', app.editWord)
 
 router.post('/webhook', app.firstpromoterWebhook)
