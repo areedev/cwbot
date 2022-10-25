@@ -22,17 +22,9 @@ const delay = (time) => {
   })
 }
 const startBrowserWithProxy = async (proxy, params = {
-  defaultViewport: null,
-  headless: true,
-  devtools: false,
-}, args = [
-  '--disable-gpu',
-  '--disable-dev-shm-usage',
-  '--no-sandbox',
-  '--disable-setuid-sandbox',
-  '--ignore-certificate-errors',
-  '--ignore-certificate-errors-spki-list'
-], executablePath = '') => {
+  headless: false,
+  defaultViewport: null
+}, args = ['--start-maximized'], executablePath = '') => {
 
   if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
@@ -48,7 +40,7 @@ const startBrowserWithProxy = async (proxy, params = {
 }
 const startBrowser = async (id) => {
   const { proxy } = await Accounts.findById(id).populate('proxy');
-  return  await startBrowserWithProxy(proxy);
+  return await startBrowserWithProxy(proxy);
 }
 const doLoginWithAuth = async (page, auth) => {
   try {
@@ -118,7 +110,7 @@ const defineBudget = (type, budget) => {
   }
   return budgetValue;
 }
-const sendProp = async (page, jobId, id, bid, force = false) => {
+const sendProp = async (page, jobId, id, bid, bidtype, budget, force = false) => {
   var link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobId;
   console.log(link);
   const visited = await Visits.findOne({ link, account: id });
@@ -148,7 +140,7 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
           e => e.innerHTML.trim())
       });
       const type = conds[0]
-      const budget = conds[1]
+      const price = conds[1]
       const desc = await page.evaluate(() => {
         return Array.from(document.querySelectorAll('.post_block > .description'),
           e => e.innerHTML.trim())
@@ -160,14 +152,14 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
         if (title.indexOf(k.keyword) >= 0)
           return console.log(`Skipping because of keword ${k.keyword}`);
       }
-      const budgetValue = defineBudget(type, budget);
+      var budgetValue = defineBudget(type, price);
       if (budgetValue == 0) {
         await Visits.create({ link, time: Date.now(), account: id });
         console.log('Skipping because of low budget...')
         return;
       }
-      console.log(type, budget, budgetValue);
-      var amtEl, bidEl, sendBtn;
+      console.log(type, price, budgetValue);
+      var amtEl, bidEl, sendBtn, hourlyBtn, fixedBtn;
       do {
         if (type == '固定報酬制')
           amtEl = await page.waitForSelector(`#amount_dummy_`)
@@ -175,7 +167,9 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
           amtEl = await page.waitForSelector(`#hourly_wage_dummy_`)
         bidEl = await page.waitForSelector('.message-body.message_body_for_reply.cw-form_control')
         sendBtn = await page.waitForSelector('.cw-button.cw-button_highlight.cw-button_lg')
-      } while (amtEl == undefined || bidEl == undefined || sendBtn == undefined);
+        hourlyBtn = await page.waitForSelector('#proposal_conditions_attributes_0_payment_type_hourly')
+        fixedBtn = await page.waitForSelector('#proposal_conditions_attributes_0_payment_type_fixed_price')
+      } while (amtEl == undefined || bidEl == undefined || sendBtn == undefined || hourlyBtn == undefined || fixedBtn == undefined);
       const setProposalValues = async (page, selector1, value1, selector2, value2) => {
         await page.waitForSelector(selector1);
         await page.click(selector1);
@@ -187,12 +181,26 @@ const sendProp = async (page, jobId, id, bid, force = false) => {
           return document.querySelector(data.selector).value = data.value
         }, { selector: selector2, value: value2 })
       }
-      if (type == '固定報酬制')
-        await setProposalValues(page, `#amount_dummy_`, budgetValue.toString(),
-          `.message-body.message_body_for_reply.cw-form_control`, bid);
-      else
-        await setProposalValues(page, `#hourly_wage_dummy_`, budgetValue.toString(),
-          `.message-body.message_body_for_reply.cw-form_control`, bid);
+      budgetValue = budget ? budget : budgetValue;
+      if (bidtype != 'none') {
+        if (bidtype == '固定報酬制') {
+          fixedBtn.click();
+          await setProposalValues(page, `#amount_dummy_`, budgetValue.toString(),
+            `.message-body.message_body_for_reply.cw-form_control`, bid);
+        } else {
+          hourlyBtn.click();
+          await setProposalValues(page, `#hourly_wage_dummy_`, budgetValue.toString(),
+            `.message-body.message_body_for_reply.cw-form_control`, bid);
+        }
+      }
+      else {
+        if (type == '固定報酬制')
+          await setProposalValues(page, `#amount_dummy_`, budgetValue.toString(),
+            `.message-body.message_body_for_reply.cw-form_control`, bid);
+        else
+          await setProposalValues(page, `#hourly_wage_dummy_`, budgetValue.toString(),
+            `.message-body.message_body_for_reply.cw-form_control`, bid);
+      }
       await delay(2000);
       await page.evaluate(() => {
         const div = document.querySelector('.cw-form_horizontal.proposal');
@@ -251,7 +259,7 @@ const bot = async (id) => {
   await browser.close();
 }
 
-const doCertain = async (id, url, type) => {
+const doCertain = async (id, url, type, bidtype, budget) => {
 
   const jobId = getJobIdFromUrl(url)
   var link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobId;
@@ -260,7 +268,7 @@ const doCertain = async (id, url, type) => {
   const { page, browser } = await startBrowser(id);
   await doLogin(page, id);
   const { bids } = await Accounts.findById(id, 'bids');
-  await sendProp(page, jobId, id, bids[type], true);
+  await sendProp(page, jobId, id, bids[type], bidtype, budget, true);
   await browser.close();
   console.log('Browser closed...')
 }

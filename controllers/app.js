@@ -97,10 +97,11 @@ const bott = (id) => {
 }
 const once = async (req, res) => {
   try {
-    var { id } = req.params
+    var { id, delay } = req.params
     const account = await Accounts.findById(id);
     if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
-    bot(id)
+    if (delay != 0) console.log('Delaying ' + delay + ' minutes...')
+    setTimeout(() => bot(id), delay * 60 * 1000)
     res.status(200).send('success')
   } catch (e) {
     console.log(e)
@@ -146,9 +147,9 @@ const addAccount = async (req, res) => {
   try {
     var { username } = req.body
     if (!username) return res.status(400).json({ success: false, error: 'Username is required' })
-    await Accounts.create({ username })
+    const user = await Accounts.create({ username })
     var accounts = await Accounts.find({}, 'username');
-    res.json({ success: true, accounts })
+    res.json({ success: true, accounts, user })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -257,12 +258,12 @@ const init = async () => {
   console.log('init')
   const status = await Settings.findOneAndUpdate({ type: 'status' }, { sentence: 'stopped' })
 }
-const doManual = async (interval, ids) => {
+const doManual = async (interval, ids, bidtype, budget) => {
   try {
     var links = await Manuallinks.find({ processed: false });
     while (links.length > 0) {
       const link = links[0]
-      await doCertainBid(link.link, link.type, interval, ids);
+      await doCertainBid(link.link, link.type, interval, ids, bidtype, budget);
       await Manuallinks.findOneAndUpdate({ link: link.link, processed: false }, { processed: true })
       links = await Manuallinks.find({ processed: false })
     }
@@ -271,7 +272,7 @@ const doManual = async (interval, ids) => {
     console.log(e)
   }
 }
-const doCertainBid = async (url, type, interval, ids) => {
+const doCertainBid = async (url, type, interval, ids, bidtype, budget) => {
   try {
     console.log('Doing manual bid to ' + url + '...')
     const accounts = await Accounts.find()
@@ -284,7 +285,7 @@ const doCertainBid = async (url, type, interval, ids) => {
         continue;
       }
       console.log('Doing account ' + account.username);
-      await doCertain(account._id, url, type);
+      await doCertain(account._id, url, type, bidtype, budget);
       console.log('Waiting for ' + interval + 'mins...');
       await delay(interval * 60 * 1000)
     }
@@ -304,7 +305,7 @@ const addBadClient = async (req, res) => {
 }
 const startManual = async (req, res) => {
   try {
-    const { url, type, interval, ids } = req.body
+    const { url, type, interval, ids, bidtype, budget } = req.body
     var link = await Manuallinks.findOne({ link: url, type })
     if (!link && url)
       link = await Manuallinks.create({ link: url, type, processed: false, createdAt: moment.now() });
@@ -317,7 +318,7 @@ const startManual = async (req, res) => {
       await Settings.findOneAndUpdate({ type: 'manual', sentence: 'running' });
     res.json({ success: true, result: link });
     // doCertainBid(url, type)
-    doManual(interval, ids)
+    doManual(interval, ids, bidtype, budget)
   } catch (e) {
     res.json({ success: false });
   }
