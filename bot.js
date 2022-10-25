@@ -22,9 +22,17 @@ const delay = (time) => {
   })
 }
 const startBrowserWithProxy = async (proxy, params = {
-  headless: false,
-  defaultViewport: null
-}, args = ['--start-maximized'], executablePath = '') => {
+  defaultViewport: null,
+  headless: true,
+  devtools: false,
+}, args = [
+  '--disable-gpu',
+  '--disable-dev-shm-usage',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--ignore-certificate-errors',
+  '--ignore-certificate-errors-spki-list'
+], executablePath = '') => {
 
   if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
