@@ -118,7 +118,7 @@ const defineBudget = (type, budget) => {
   }
   return budgetValue;
 }
-const sendProp = async (page, jobId, id, bid, bidtype, budget, force = false) => {
+const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, force = false) => {
   var link = 'https://crowdworks.jp/proposals/new?job_offer_id=' + jobId;
   console.log(link);
   const visited = await Visits.findOne({ link, account: id });
