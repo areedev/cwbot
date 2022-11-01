@@ -181,7 +181,8 @@ const getAccounts = async (req, res) => {
 const saveCredentials = async (req, res) => {
   try {
     var { id } = req.params
-    await Accounts.findByIdAndUpdate(id, { auth: req.body.auth, username: req.body.username })
+    const { auth, username, cwid } = req.body
+    await Accounts.findByIdAndUpdate(id, { auth, username, cwid })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -223,6 +224,18 @@ const makeBlocked = async (req, res) => {
   try {
     var { id } = req.params
     await Accounts.findByIdAndUpdate(id, { blocked: true })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+
+const setClient = async (req, res) => {
+  try {
+    var { id } = req.params
+    var { client } = req.body
+    await Accounts.findByIdAndUpdate(id, { client })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -574,5 +587,6 @@ module.exports = {
   deleteKeyword,
   addCategory,
   addWord,
-  startLocalChrome
+  startLocalChrome,
+  setClient
 }

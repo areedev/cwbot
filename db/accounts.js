@@ -8,7 +8,9 @@ var schema = mongoose.Schema({
   auto: { type: Boolean, default: false },
   proxy: { type: mongoose.Types.ObjectId, ref: 'proxies', default: null },
   status: { type: String, default: 'stopped' },
-  blocked: { type: Boolean, default: false }
+  blocked: { type: Boolean, default: false },
+  client: { type: Boolean, default: false },
+  cwid: { type: String, default: '' }
 });
 
 module.exports = mongoose.model('accounts', schema);

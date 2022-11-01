@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer-extra');
 const Visits = require('./db/visits')
 const moment = require('moment');
 const Accounts = require('./db/accounts');
+const Contracts = require('./db/contracts');
 const BadClients = require('./db/badclients');
 const Keywords = require('./db/keywords');
 
@@ -128,7 +129,7 @@ const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, forc
   try {
     if (!visited) {
       await page.goto(link);
-      const url = await page.evaluate(() => document.location.href);
+      var url = await page.evaluate(() => document.location.href);
       console.log(url)
       if (url.indexOf('contracts/') > -1) {
         return console.log('Already applied...')
@@ -154,7 +155,9 @@ const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, forc
           e => e.innerHTML.trim())
       });
       const title = await page.evaluate(() => document.querySelector('.title_container.title_simple a').innerHTML.trim());
-      console.log(title);
+      var clientId = await page.evaluate(() => document.querySelector(".job_offer_extract .header_summary a").href);
+      clientId = clientId.substring(clientId.lastIndexOf("employers") + 10, clientId.lastIndexOf("employers") + 17);
+      console.log(title, clientId);
       const keywords = await Keywords.find();
       for (const k of keywords) {
         if (title.indexOf(k.keyword) >= 0)
@@ -218,6 +221,21 @@ const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, forc
       await sendBtn.click();
       await delay(2000);
       await Visits.create({ link, time: Date.now(), account: id });
+      const client = await Accounts.findOne({ cwid: clientId });
+      if (client) {
+        console.log('Fake client')
+        await page.goto(link);
+        url = await page.evaluate(() => document.location.href);
+        if (url.indexOf('proposals') < 0) return;
+        const contract = await Contracts.findOne({ clientCwId: clientId, workerId: id, jobId });
+        if (!contract) {
+          console.log('Creating contract')
+          await Contracts.create({ clientCwId: clientId, clientId: client._id, workerId: id, step: 0, jobId, proposalId: url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('/') + 10) })
+        } else {
+          console.log('Updating contract')
+          await Contracts.findOneAndUpdate({ clientCwId: clientId, workerId: id }, { step: 0, jobId, proposalId: url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('/') + 10) })
+        }
+      }
     }
   } catch (e) {
     console.log(e)
