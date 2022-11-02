@@ -630,6 +630,30 @@ const startLocalChrome = async (req, res) => {
     res.json({ success: false, error: e.message })
   }
 }
+const getAcc = async (req, res) => {
+  try {
+    const workers = await Accounts.find({ $or: [{ blocked: false }, { blocked: null }], $or: [{ client: false }, { client: null }] })
+    const clients = await Accounts.find({ $or: [{ blocked: false }, { blocked: null }], client: true })
+    res.json({ success: true, workers, clients })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const createContract = async (req, res) => {
+  try {
+    var { step, clientCwId, workerCwId, proposalId, contractId, jobId } = req.body
+    var job = await Jobs.findOne({ cwid: jobId })
+    var client = await Accounts.findOne({ cwid: clientCwId })
+    console.log(clientCwId, client._id, client.cwid)
+    var worker = await Accounts.findOne({ cwid: workerCwId })
+    await Contracts.create({ jobId, job: job._id, proposalId, contractId, clientId: client._id, clientCwId, workerId: worker._id, workerCwId, step: parseInt(step) })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 init()
 module.exports = {
   auth,
@@ -680,5 +704,7 @@ module.exports = {
   doContractAction,
   doContractActions,
   manualEscrow,
-  sendSimpleMessage
+  createContract,
+  sendSimpleMessage,
+  getAcc
 }

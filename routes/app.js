@@ -36,6 +36,8 @@ router.post('/api/admin/contracts/message', app.sendSimpleMessage)
 router.get('/api/admin/contracts/manualescrow/:id', app.manualEscrow)
 router.get('/api/admin/jobs/:id', app.getJobs)
 router.post('/api/admin/jobs', app.addJob)
+router.post('/api/admin/addcontract', app.createContract)
+router.post('/api/admin/getacc', app.getAcc)
 // router.post('/api/admin/settings/dictionary/word/edit', app.editWord)
 
 router.post('/webhook', app.firstpromoterWebhook)
