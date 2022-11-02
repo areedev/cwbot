@@ -77,13 +77,15 @@ const doLoginWithAuth = async (page, auth) => {
     await delay(3000);
     await page.$eval('.button-login', el => el.click());
     await delay(3000);
+    return { res: 'success', err: '' }
   } catch (e) {
     console.log('Error in login...', e)
+    return { res: null, err: 'Error in login...' }
   }
 }
 const doLogin = async (page, id) => {
   var { auth } = await Accounts.findById(id, 'auth')
-  await doLoginWithAuth(page, auth);
+  return await doLoginWithAuth(page, auth);
 }
 const getJobIdFromUrl = (url) => {
   return url.substring(url.lastIndexOf('/') + 1)
@@ -298,7 +300,259 @@ const doCertain = async (id, url, type, bidtype, budget) => {
   await browser.close();
   console.log('Browser closed...')
 }
+const sendSimpleMessage = async (page, contractId, message) => {
+  if (message) {
+    try {
+      var contract = await Contracts.findById(contractId)
+      var url = contract.step < 2 ? `https://crowdworks.jp/proposals/${contract.proposalId}` : `https://crowdworks.jp/contracts/${contract.contractId}`
+      console.log(url, message)
+      await page.goto(url, { timeout: 60000 })
 
+      const setMessage = async (page, selector, value) => {
+        await page.waitForSelector(selector);
+        await page.click(selector);
+        page.keyboard.type(value);
+      }
+      await delay(2000);
+      await setMessage(page, '#pack-message-thread #message_body', message)
+      await delay(2000);
+      await page.evaluate(() => {
+        const div = document.querySelector(".cw-message-thread");
+        div.click();
+      })
+      await delay(2000);
+      await page.evaluate(() => { const btn = document.querySelector('.cw-message-form .form-footer button.cw-button.cw-button_action'); btn.click(); })
+    }
+    catch (e) {
+      console.log(e)
+    }
+  }
+}
+const cAgreeCond = async (page, contractId, id, message = '') => {
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 0 && account.client) {
+    try {
+      var url = `https://crowdworks.jp/proposals/${contract.proposalId}`
+      await page.goto(url, { timeout: 60000 });
+      url = await page.evaluate(() => document.location.href);
+      if (url.indexOf('proposals') < 0) return;
+      await page.evaluate(() => { const btn = document.querySelector(".actions a.intro-employer_proposed_project"); btn.click(); })
+      await delay(1000);
+      await page.evaluate(() => { const checkbox = document.querySelector("#check-terms"); checkbox.click(); })
+      await page.evaluate(() => { const btn = document.querySelector(".contractual-agreement"); btn.click(); })
+      await delay(2000);
+      await Contracts.findByIdAndUpdate(contractId, { step: 1 })
+      if (message) await sendSimpleMessage(page, contractId, message)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+}
+const wAgreeContract = async (page, contractId, id, message = '') => {
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 1 && !account.client) {
+    try {
+      var url = `https://crowdworks.jp/proposals/${contract.proposalId}`
+      await page.goto(url, { timeout: 60000 });
+      url = await page.evaluate(() => document.location.href);
+      if (url.indexOf('proposals') < 0) return;
+      url = await page.evaluate(() => document.querySelector("a.intro-employer_waiting_contract_project").href);
+      await page.goto(url);
+      url = await page.evaluate(() => document.location.href);
+      if (url.indexOf('contract_requests/new') < 0) return;
+      console.log('agreeing')
+      await page.evaluate(() => { const btn = document.querySelector(".new_contract_request .action input.cw-button"); btn.click() });
+      await delay(1000);
+      url = `https://crowdworks.jp/proposals/${contract.proposalId}`
+      await page.goto(url);
+      url = await page.evaluate(() => document.location.href);
+      if (url.indexOf('contracts') < 0) return;
+      await Contracts.findByIdAndUpdate(contractId, { step: 2, contractId: url.substring(url.indexOf('contracts') + 10, url.indexOf('contracts') + 18) })
+      if (message) await sendSimpleMessage(page, contractId, message)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+}
+const cEscrow = async (page, contractId, id, message = '') => {
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 2 && account.client) {
+    try {
+      var url = `https://crowdworks.jp/contracts/${contract.contractId}/milestones`
+      await page.goto(url, { timeout: 60000 });
+      url = await page.evaluate(() => document.location.href);
+      if (url.indexOf(`contracts/${contract.contractId}/milestones`) < 0) return;
+      // url = await page.evaluate(() => document.querySelector("a.intro-employer_waiting_contract_project").href);
+      // await page.goto(url);
+      // url = await page.evaluate(() => document.location.href);
+      // if (url.indexOf('contract_requests/new') < 0) return;
+      // console.log('agreeing')
+      await page.evaluate(() => { const btn = document.querySelector('#escrow_id input.cw-button'); btn.click() });
+      await delay(2000);
+      await page.evaluate(() => { const btn = document.querySelector('.one_click_payment_form input.cw-button'); btn.click() });
+      await delay(1000);
+      await page.evaluate(() => { const btn = document.querySelector('.ui-dialog-buttonset button:nth-child(1)'); btn.click() });
+      await delay(1000);
+      url = `https://crowdworks.jp/contracts/${contract.contractId}`
+      await page.goto(url);
+      // url = await page.evaluate(() => document.location.href);
+      // if (url.indexOf('contracts') < 0) return;
+      // contract.contractId = url.substring(url.indexOf('contracts') + 10, url.indexOf('contracts') + 18)
+      await Contracts.findByIdAndUpdate(contractId, { step: 3 });
+      if (message) await sendSimpleMessage(page, contractId, message)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+}
+
+const wDeliver = async (page, contractId, id, message = '') => {
+  if (!message) return;
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 3 && !account.client) {
+    var url = `https://crowdworks.jp/contracts/${contract.contractId}`
+    await page.goto(url, { timeout: 60000 });
+    url = await page.evaluate(() => document.location.href);
+    if (url.indexOf('contracts') < 0) return;
+    await page.evaluate(() => { const btn = document.querySelector('.progress .progress_detail .action a.cw-button'); btn.click(); })
+    await delay(2000);
+    await page.waitForSelector('.ui-dialog .message-dialog .cw-core_enable #message_body');
+    await page.evaluate((data) => {
+      var textarea = document.querySelector(data.selector);
+      textarea.value = data.value;
+      const event = new Event('change');
+      textarea.dispatchEvent(event);
+    }, { selector: '.ui-dialog .message-dialog .cw-core_enable #message_body', value: message })
+    await delay(2000);
+    await page.evaluate(() => { const btn = document.querySelector('.ui-dialog .message-dialog .cw-core_enable .submit input.cw-button'); btn.click(); })
+    await delay(1000);
+    await Contracts.findByIdAndUpdate(contractId, { step: 4 });
+    // if (message) await sendSimpleMessage(page, contractId, message)
+  }
+}
+const cTest = async (page, contractId, id, message = '') => {
+  if (!message) return;
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 4 && account.client) {
+    var url = `https://crowdworks.jp/contracts/${contract.contractId}`
+    await page.goto(url, { timeout: 60000 });
+    url = await page.evaluate(() => document.location.href);
+    if (url.indexOf('contracts') < 0) return;
+    await page.evaluate(() => { const btn = document.querySelector('.action.intro-employer_acceptance_project a:nth-child(1)'); btn.click(); })
+    await delay(2000);
+    await page.waitForSelector('.ui-dialog .message-dialog .cw-core_enable #message_body');
+    await page.evaluate((data) => {
+      var textarea = document.querySelector(data.selector);
+      textarea.value = data.value;
+      const event = new Event('change');
+      textarea.dispatchEvent(event);
+    }, { selector: '.ui-dialog .message-dialog .cw-core_enable #message_body', value: message })
+    await delay(2000);
+    await page.evaluate(() => { const btn = document.querySelector('.ui-dialog .message-dialog .cw-core_enable .submit input.cw-button'); btn.click(); })
+    await delay(2000);
+    await Contracts.findByIdAndUpdate(contractId, { step: 5 });
+    // if (message) await sendSimpleMessage(page, contractId, message)
+  }
+}
+const cReview = async (page, contractId, id, message = '') => {
+  if (!message) return;
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 5 && account.client) {
+    var url = `https://crowdworks.jp/contracts/${contract.contractId}/feedbacks/new`
+    await page.goto(url, { timeout: 60000 });
+    url = await page.evaluate(() => document.location.href);
+    if (url.indexOf('feedbacks/new') < 0) return;
+
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_skills_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_quality_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_deadlines_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_communication_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_cooperation_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#real_evaluation_score_10'); btn.click(); })
+    await page.waitForSelector('#feedback_comment');
+    await page.evaluate((data) => {
+      var textarea = document.querySelector(data.selector);
+      textarea.value = data.value;
+      const event = new Event('change');
+      textarea.dispatchEvent(event);
+    }, { selector: '#feedback_comment', value: message })
+    await page.evaluate(() => { const btn = document.querySelector('.feedback-modal-container button'); btn.click(); })
+    await delay(1000);
+    await page.evaluate(() => { const btn = document.querySelector('.cw-button.cw-button_action.modal-action-button'); btn.click(); })
+    await delay(1000);
+    await Contracts.findByIdAndUpdate(contractId, { step: 6 });
+    // if (message) await sendSimpleMessage(page, contractId, message)
+  }
+}
+const wReview = async (page, contractId, id, message = '') => {
+  if (!message) return;
+  var contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (contract.step == 6 && !account.client) {
+    var url = `https://crowdworks.jp/contracts/${contract.contractId}/feedbacks/new`
+    await page.goto(url, { timeout: 60000 });
+    url = await page.evaluate(() => document.location.href);
+    if (url.indexOf('feedbacks/new') < 0) return;
+
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_skills_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_quality_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_deadlines_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_communication_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#feedback_cooperation_5'); btn.click(); })
+    await page.evaluate(() => { const btn = document.querySelector('#real_evaluation_score_10'); btn.click(); })
+    await page.waitForSelector('#feedback_comment');
+    await page.evaluate((data) => {
+      var textarea = document.querySelector(data.selector);
+      textarea.value = data.value;
+      const event = new Event('change');
+      textarea.dispatchEvent(event);
+    }, { selector: '#feedback_comment', value: message })
+    await page.evaluate(() => { const btn = document.querySelector('.feedback-modal-container button'); btn.click(); })
+    await delay(1000);
+    await page.evaluate(() => { const btn = document.querySelector('.cw-button.cw-button_action.modal-action-button'); btn.click(); })
+    await delay(1000);
+    await Contracts.findByIdAndUpdate(contractId, { step: 7 });
+    // if (message) await sendSimpleMessage(page, contractId, message)
+  }
+}
+
+const contractAction = async (page, contractId, id, message = '') => {
+  const contract = await Contracts.findById(contractId)
+  const account = await Accounts.findById(id)
+  if (account.client && contract.step == 0) await cAgreeCond(page, contractId, id, message)
+  if (!account.client && contract.step == 1) await wAgreeContract(page, contractId, id, message)
+  if (account.client && contract.step == 2) await cEscrow(page, contractId, id, message)
+  if (!account.client && contract.step == 3) await wDeliver(page, contractId, id, message)
+  if (account.client && contract.step == 4) await cTest(page, contractId, id, message)
+  if (account.client && contract.step == 5) await cReview(page, contractId, id, message)
+  if (!account.client && contract.step == 6) await wReview(page, contractId, id, message)
+}
+
+const contractActions = async (ids, id, message = '') => {
+  const { page, browser } = await startBrowser(id);
+  const { res, err } = await doLogin(page, id);
+  if (res)
+    for (let i = 0; i < ids.length; i++) {
+      await contractAction(page, ids[i], id, message)
+    }
+  await browser.close()
+  console.log('Browser closed...')
+}
+const sendSimpleMessages = async (ids, id, message = '') => {
+  const { page, browser } = await startBrowser(id);
+  await doLogin(page, id);
+  for (let i = 0; i < ids.length; i++) {
+    await sendSimpleMessage(page, ids[i], message)
+  }
+  await browser.close()
+  console.log('Browser closed...')
+}
 const startLocalAccount = async (proxy, auth, chrome) => {
   var params = {
     headless: false,
@@ -309,4 +563,4 @@ const startLocalAccount = async (proxy, auth, chrome) => {
   const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
   doLoginWithAuth(page, auth);
 }
-module.exports = { bot, doCertain, delay, startLocalAccount }
+module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages }

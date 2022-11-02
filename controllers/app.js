@@ -4,7 +4,7 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain, delay, startLocalAccount } = require('../bot')
+const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 const Manuallinks = require('../db/manuallinks')
@@ -13,6 +13,8 @@ const Categories = require('../db/category')
 const Words = require('../db/dictionary')
 const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
+const Contracts = require('../db/contracts')
+const Jobs = require('../db/jobs')
 var intervals = [];
 var interval = null;
 var tickTime;
@@ -171,7 +173,7 @@ const getAccount = async (req, res) => {
 }
 const getAccounts = async (req, res) => {
   try {
-    var accounts = await Accounts.find({}, 'username blocked');
+    var accounts = await Accounts.find({}, 'username blocked client');
     res.json({ success: true, accounts })
   } catch (e) {
     console.log(e)
@@ -531,6 +533,89 @@ const removeProxy = async (req, res) => {
   }
 }
 
+const getContracts = async (req, res) => {
+  try {
+    const { id } = req.params
+    var contracts;
+    const { client } = await Accounts.findById(id)
+    if (client) contracts = await Contracts.find({ clientId: id }).populate('workerId').populate('clientId')
+    else contracts = await Contracts.find({ workerId: id }).populate('workerId').populate('clientId')
+    res.json({ success: true, result: contracts, client })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+const doContractAction = async (req, res) => {
+  try {
+    const { contractId, client, id } = req.body
+    var contract = await Contracts.findById(contractId)
+    if (!contract) return res.json({ success: false, error: 'Invalid contract' })
+    // contractAction(contractId, id)
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+const doContractActions = async (req, res) => {
+  try {
+    const { ids, client, id, message } = req.body
+    if (ids.length == 0) return res.json({ success: false, error: 'empty' })
+    contractActions(ids, id, message);
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+const sendSimpleMessage = async (req, res) => {
+  try {
+    const { ids, client, id, message } = req.body
+    if (ids.length == 0) return res.json({ success: false, error: 'empty' })
+    sendSimpleMessages(ids, id, message);
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+const manualEscrow = async (req, res) => {
+  try {
+    const { id } = req.params
+    await Contracts.findByIdAndUpdate(id, { step: 3 })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+const getJobs = async (req, res) => {
+  try {
+    const { id } = req.params
+    var jobs = await Jobs.find({ clientId: id })
+    res.json({ success: true, jobs })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+const addJob = async (req, res) => {
+  try {
+    const { id, title, cwid } = req.body
+    var job = await Jobs.create({ clientId: id, title, cwid })
+    res.json({ success: true, job })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+
 const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
   res.json({});
@@ -588,5 +673,12 @@ module.exports = {
   addCategory,
   addWord,
   startLocalChrome,
-  setClient
+  setClient,
+  getContracts,
+  getJobs,
+  addJob,
+  doContractAction,
+  doContractActions,
+  manualEscrow,
+  sendSimpleMessage
 }

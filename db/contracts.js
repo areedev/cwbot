@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 
 var schema = mongoose.Schema({
   jobId: { type: String, default: '' },
+  job: { type: mongoose.Types.ObjectId, ref: 'jobs', default: null },
   proposalId: { type: String, default: '' },
   contractId: { type: String, default: '' },
   clientId: { type: mongoose.Types.ObjectId, ref: 'accounts', default: null },
