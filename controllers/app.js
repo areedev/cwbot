@@ -15,6 +15,7 @@ const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
 const Contracts = require('../db/contracts')
 const Jobs = require('../db/jobs')
+const Opeartions = require('../db/operations')
 var intervals = [];
 var interval = null;
 var tickTime;
@@ -615,6 +616,54 @@ const addJob = async (req, res) => {
   }
 }
 
+const addOperation = async (req, res) => {
+  try {
+    const { id, payload } = req.body
+    const operation = await Opeartions.create({ id, payload, status: 0, createdAt: moment.now() })
+    res.json({ success: true, result: operation })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e })
+  }
+}
+
+const getOperations = async (req, res) => {
+  try {
+    const { status } = req.body
+    const operations = await Opeartions.find({ $not: { status: 2 } })
+    res.json({ success: true, result: operations })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e })
+  }
+}
+const doOperation = async (op) => {
+
+}
+const doOperations = async (req, res) => {
+  try {
+    const { ids } = req.body
+    const operations = await Opeartions.find({ status: 0 })
+    for (var operation of operations) {
+      await doOperation(operation)
+    }
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e })
+  }
+}
+
+const removeOperation = async (req, res) => {
+  try {
+    const { id } = req.params
+    await Opeartions.remove({ _id: id })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e })
+  }
+}
 
 const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
@@ -680,5 +729,9 @@ module.exports = {
   doContractAction,
   doContractActions,
   manualEscrow,
-  sendSimpleMessage
+  sendSimpleMessage,
+  addOperation,
+  getOperations,
+  removeOperation,
+  doOperations
 }
