@@ -10,7 +10,9 @@ var schema = mongoose.Schema({
   status: { type: String, default: 'stopped' },
   blocked: { type: Boolean, default: false },
   client: { type: Boolean, default: false },
-  cwid: { type: String, default: '' }
+  cwid: { type: String, default: '' },
+  imgPath: { type: String, default: '' },
+  tag: { type: String, default: '' }
 });
 
 module.exports = mongoose.model('accounts', schema);

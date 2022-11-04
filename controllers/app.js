@@ -173,7 +173,7 @@ const getAccount = async (req, res) => {
 }
 const getAccounts = async (req, res) => {
   try {
-    var accounts = await Accounts.find({}, 'username blocked client');
+    var accounts = await Accounts.find({}, 'username blocked client imgPath tag');
     res.json({ success: true, accounts })
   } catch (e) {
     console.log(e)
@@ -183,8 +183,8 @@ const getAccounts = async (req, res) => {
 const saveCredentials = async (req, res) => {
   try {
     var { id } = req.params
-    const { auth, username, cwid } = req.body
-    await Accounts.findByIdAndUpdate(id, { auth, username, cwid })
+    const { auth, username, cwid, imgPath, tag } = req.body
+    await Accounts.findByIdAndUpdate(id, { auth, username, cwid, imgPath, tag })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -248,7 +248,6 @@ const setClient = async (req, res) => {
 const doLogin = async (req, res) => {
   try {
     const { username, password } = req.body
-    console.log(username, password)
     var user = await Users.findOne({ username, password })
     if (user) {
       var token = jwt.encode({ _id: user._id }, '12345678')
@@ -260,7 +259,17 @@ const doLogin = async (req, res) => {
     res.status(400).json({ error: e.message })
   }
 }
-
+const setImgPath = async (req, res) => {
+  try {
+    const { imgPath } = req.body
+    const { id } = req.params
+    await Users.findByIdAndUpdate(id, { imgPath })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message });
+  }
+}
 const doLoginjwt = async (req, res) => {
   res.json({ success: true })
 }
@@ -507,10 +516,10 @@ const addProxy = async (req, res) => {
 }
 const updateProxy = async (req, res) => {
   try {
-    var { _id, ip, port, type, username, password } = req.body
+    var { _id, ip, port, type, username, password, tag } = req.body
     var proxy = await Proxies.findById(_id)
     if (!proxy) return res.json({ success: false, error: 'Invalid id' });
-    proxy = await Proxies.findByIdAndUpdate(_id, { ip, port, type, username, password })
+    proxy = await Proxies.findByIdAndUpdate(_id, { ip, port, type, username, password, tag })
     var proxies = await Proxies.find()
     res.json({ success: true, result: proxies })
 
@@ -680,5 +689,6 @@ module.exports = {
   doContractAction,
   doContractActions,
   manualEscrow,
-  sendSimpleMessage
+  sendSimpleMessage,
+  setImgPath
 }

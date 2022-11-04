@@ -6,6 +6,7 @@ var schema = mongoose.Schema({
   type: { type: String, default: '' },
   port: { type: String, default: '' },
   ip: { type: String, default: '' },
+  tag: { type: String, default: '' }
 });
 
 module.exports = mongoose.model('proxies', schema);
