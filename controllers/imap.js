@@ -6,6 +6,7 @@ const axios = require('axios')
 const { READ_MAIL_CONFIG } = require('../config');
 const Emails = require('../db/mails');
 
+var originMail = '', mailIndex = 0
 // var mail = nodemailer.createTransport({
 //   host: SEND_MAIL_CONFIG.host,
 //   // service: SEND_MAIL_CONFIG.service,
@@ -21,9 +22,12 @@ const handleMail = async (content, type, message, source) => {
   //   to: SLACK.MAIL,
   //   subject: message.title
   // }
-  console.log(message, type, content)
-  if (message.title != '【クラウドワークス】新規会員登録を完了してください' || message.from.address != 'no-reply@crowdworks.jp' || type != "text")
+  if (message.title != '【クラウドワークス】新規会員登録を完了してください' ||
+    message.from.address != 'no-reply@crowdworks.jp' ||
+    to[0].name != `${originMail}+${mailIndex}` ||
+    to[0].address != originMail)
     return;
+  console.log(message, type, content)
   // try {
   //   await sentNotification();
   // } catch (e) {
@@ -70,6 +74,8 @@ const connectImap = async (email) => {
 }
 const startImap = async (origin, no) => {
 
+  originMail = origin
+  mailIndex = no
   const email = await Emails.findOne({ user: origin });
   if (!email) return;
   connectImap(email, no)
