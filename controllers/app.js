@@ -99,11 +99,13 @@ const bott = (id) => {
 }
 const once = async (req, res) => {
   try {
-    var { id, delay } = req.params
+    var { id } = req.params
+    var { pages, delay } = req.body
+    
     const account = await Accounts.findById(id);
     if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
     if (delay != 0) console.log('Delaying ' + delay + ' minutes...')
-    setTimeout(() => bot(id), delay * 60 * 1000)
+    setTimeout(() => bot(id, pages), delay * 60 * 1000)
     res.status(200).send('success')
   } catch (e) {
     console.log(e)

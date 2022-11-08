@@ -9,10 +9,10 @@ const Keywords = require('./db/keywords');
 const loginUrl = 'https://crowdworks.jp/login?ref=toppage_hedder'
 
 const urls = {
-  web: 'https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new&page=1',
-  app: 'https://crowdworks.jp/public/jobs/search?category_id=242&keep_search_criteria=true&order=new&hide_expired=true&page=1',
-  sys: 'https://crowdworks.jp/public/jobs/search?category_id=226&keep_search_criteria=true&order=new&hide_expired=true&page=1',
-  ec: 'https://crowdworks.jp/public/jobs/search?category_id=235&keep_search_criteria=true&order=new&hide_expired=true&page=1'
+  web: 'https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new',
+  app: 'https://crowdworks.jp/public/jobs/search?category_id=242&keep_search_criteria=true&order=new&hide_expired=true',
+  sys: 'https://crowdworks.jp/public/jobs/search?category_id=226&keep_search_criteria=true&order=new&hide_expired=true',
+  ec: 'https://crowdworks.jp/public/jobs/search?category_id=235&keep_search_criteria=true&order=new&hide_expired=true'
 };
 
 const types = ['web', 'app', 'sys', 'ec'];
@@ -243,9 +243,9 @@ const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, forc
     console.log(e)
   }
 }
-const goJobsPage = async (page, id, type) => {
+const goJobsPage = async (page, id, type, pages) => {
   try {
-    await page.goto(urls[type], { timeout: 60000 });
+    await page.goto(`${urls[type]}&page=${pages}`, { timeout: 60000 });
     await page.waitForSelector('.jobs_lists.jobs_lists_simple', { timeout: 60000 })
     const data = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .item_title a[href]'),
@@ -255,7 +255,7 @@ const goJobsPage = async (page, id, type) => {
       return Array.from(document.querySelectorAll('.jobs_lists.jobs_lists_simple > li .client-information .user-name a[href]'),
         a => a.getAttribute('href').substring(a.getAttribute('href').lastIndexOf('/') + 1))
     });
-    console.log(`Doing ${type} bid...\n${data.length} links fetched...`)
+    console.log(`Doing ${type} bid ${pages} page...\n${data.length} links fetched...`)
     var cnt = data.length;
     const { bids } = await Accounts.findById(id, 'bids');
     var badclients = await BadClients.find();
@@ -277,12 +277,13 @@ const goJobsPage = async (page, id, type) => {
   }
 }
 
-const bot = async (id) => {
+const bot = async (id, pages) => {
 
   const { page, browser } = await startBrowser(id);
   await doLogin(page, id);
   for (var type of types) {
-    await goJobsPage(page, id, type);
+    for (let i = 1; i <= pages; i++)
+      await goJobsPage(page, id, type, pages);
   }
   await browser.close();
 }
