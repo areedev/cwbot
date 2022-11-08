@@ -566,11 +566,11 @@ const createAcc = async (mail, no, i, eventEmitter) => {
     console.log(payload)
   })
   await page.goto(registerUrl, { timeout: 60000 })
-  page.evaluate(async () => {
-    document.querySelector('#email_verification_key').value = `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`;
+  page.evaluate(async (mail) => {
+    document.querySelector('#email_verification_key').value = mail;
     await delay(1000);
     document.querySelector('.button-submit').click();
-  })
+  }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
 }
 
 const startAccAutoCreate = async (id, no) => {
