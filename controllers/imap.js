@@ -28,6 +28,7 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
     message.from.address != 'no-reply@crowdworks.jp' ||
     message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
     return;
+  console.log(content.toString().indexOf('https://crowdworks.jp/user/new?key'))
   eventEmitter.emit('newmail', { to: message.to[0].name, content })
   // try {
   //   await sentNotification();
