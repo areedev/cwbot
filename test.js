@@ -3,9 +3,10 @@ const Settings = require('./db/settings');
 const mongoose = require('mongoose');
 const dbConfig = require('./db/config')
 const puppeteer = require('puppeteer-extra');
+const { startImap } = require('./controllers/imap');
 
 const fun = async () => {
-  // mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+  mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
   // var accounts = await Accounts.find()
   // for (var account of accounts) {
   //   var id = account._id
@@ -22,12 +23,13 @@ const fun = async () => {
 
   // await Settings.deleteMany({ type: { $not: { $eq: 'auto' } } })
   // process.exit(0)
-  var params = {
-    headless: false,
-    defaultViewport: null
-  }
-  var args = ['--start-maximized']
-  const browser = await puppeteer.launch({ ...params, args, executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' });
+  // var params = {
+  //   headless: false,
+  //   defaultViewport: null
+  // }
+  // var args = ['--start-maximized']
+  // const browser = await puppeteer.launch({ ...params, args, executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' });
+  startImap('omnisuperadm1@gmail.com', 1)
 
 }
 
