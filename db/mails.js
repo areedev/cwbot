@@ -4,5 +4,6 @@ var schema = mongoose.Schema({
   user: { type: String, default: '' },
   password: { type: String, default: '' },
   host: { type: String, default: '' },
+  no: { type: String, default: 0 }
 });
 module.exports = mongoose.model('mails', schema);

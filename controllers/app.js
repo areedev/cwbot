@@ -4,9 +4,10 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages } = require('../bot')
+const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages, startAccAutoCreate } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
+
 const Manuallinks = require('../db/manuallinks')
 const Keywords = require('../db/keywords')
 const Categories = require('../db/category')
@@ -15,6 +16,7 @@ const BadClients = require('../db/badclients')
 const Proxies = require('../db/proxies')
 const Contracts = require('../db/contracts')
 const Jobs = require('../db/jobs')
+const Mails = require('../db/mails')
 var intervals = [];
 var interval = null;
 var tickTime;
@@ -101,7 +103,7 @@ const once = async (req, res) => {
   try {
     var { id } = req.params
     var { pages, delay } = req.body
-    
+
     const account = await Accounts.findById(id);
     if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
     if (delay != 0) console.log('Delaying ' + delay + ' minutes...')
@@ -487,7 +489,8 @@ const getPublicSettings = async (req, res) => {
     var keywords = await Keywords.find().sort([['createdAt', -1]]);
     var categories = await Categories.find();
     var words = await Words.find().sort([['createdAt', -1]]);
-    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories } })
+    var mails = await Mails.find({}, 'user no');
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories, mails } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -541,6 +544,18 @@ const removeProxy = async (req, res) => {
   } catch (e) {
     console.log(e)
     res.json({ success: false })
+  }
+}
+
+const startAutoCreate = async (req, res) => {
+  try {
+    const { id } = req.params
+    var { no } = req.body;
+    startAccAutoCreate(id, no)
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
   }
 }
 
@@ -692,5 +707,6 @@ module.exports = {
   doContractActions,
   manualEscrow,
   sendSimpleMessage,
-  setImgPath
+  setImgPath,
+  startAutoCreate
 }

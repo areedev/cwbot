@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const axios = require('axios')
 const { READ_MAIL_CONFIG } = require('../config');
 const Emails = require('../db/mails');
+const ImapCreated = require('../db/imapcreated');
 
 var originMail = '', mailIndex = 0
 // var mail = nodemailer.createTransport({
@@ -15,19 +16,20 @@ var originMail = '', mailIndex = 0
 // })
 
 
-const handleMail = async (content, type, message, source) => {
+const handleMail = async (content, type, message, source, eventEmitter) => {
   if (!content) return;
   // var mailOptions = {
   //   from: `${source} ${message.from.address} <${SEND_MAIL_CONFIG.auth.user}>`,
   //   to: SLACK.MAIL,
   //   subject: message.title
   // }
+  const mail = await Emails.findOne({ user: source })
   if (message.title != '【クラウドワークス】新規会員登録を完了してください' ||
     message.from.address != 'no-reply@crowdworks.jp' ||
-    to[0].name != `${originMail}+${mailIndex}` ||
-    to[0].address != originMail)
+    to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
     return;
-  console.log(message, type, content)
+  // console.log(message, type, content);
+  eventEmitter.emit('newmail', { to: to[0].name, content })
   // try {
   //   await sentNotification();
   // } catch (e) {
@@ -40,15 +42,17 @@ const handleMail = async (content, type, message, source) => {
   //   console.log("Failed to send mail", e)
   // }
 }
-const connectImap = async (email) => {
+var client;
+const connectImap = async (email, eventEmitter) => {
   console.log(`Connecting to ${email.user} IMAP server...`)
-  var client = inbox.createConnection(READ_MAIL_CONFIG.imap.port, email.host, {
+  client = inbox.createConnection(READ_MAIL_CONFIG.imap.port, email.host, {
     secureConnection: true,
     auth: { user: email.user, pass: email.password }
   });
   client.connect();
   client.on("connect", function () {
     console.log(`Successfully connected to ${email.user} IMAP server`);
+    eventEmitter.emit('imapstarted', {})
     client.openMailbox("INBOX", function (error, info) {
       if (error) throw error;
       console.log("Message count in INBOX: " + info.count);
@@ -61,7 +65,7 @@ const connectImap = async (email) => {
       var type = ''
       if (parsed.html) type = 'html'
       else if (parsed.text) type = 'text'
-      handleMail(parsed[type], type, message, email.user);
+      handleMail(parsed[type], type, message, email.user, eventEmitter);
     });
   });
   client.on('close', function () {
@@ -72,13 +76,13 @@ const connectImap = async (email) => {
   });
   // setTimeout(() => client.close(), 3000)
 }
-const startImap = async (origin, no) => {
-
-  originMail = origin
-  mailIndex = no
+const startImap = async (origin, eventEmitter) => {
   const email = await Emails.findOne({ user: origin });
   if (!email) return;
-  connectImap(email, no)
+  connectImap(email, eventEmitter)
 }
 
-module.exports = { startImap }
+const closeImap = async () => {
+  client.close();
+}
+module.exports = { startImap, closeImap }

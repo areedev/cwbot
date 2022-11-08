@@ -1,13 +1,17 @@
 const puppeteer = require('puppeteer-extra');
-const Visits = require('./db/visits')
+const EventEmitter = require('events');
 const moment = require('moment');
+
 const Accounts = require('./db/accounts');
 const Contracts = require('./db/contracts');
 const BadClients = require('./db/badclients');
 const Keywords = require('./db/keywords');
-
+const Visits = require('./db/visits')
+const Mails = require('./db/mails');
+const { startImap, closeImap } = require('./controllers/imap');
 const loginUrl = 'https://crowdworks.jp/login?ref=toppage_hedder'
 
+const registerUrl = 'https://crowdworks.jp/user/new_email?ref=toppage_hedder'
 const urls = {
   web: 'https://crowdworks.jp/public/jobs/search?category_id=230&hide_expired=true&keep_search_criteria=true&order=new',
   app: 'https://crowdworks.jp/public/jobs/search?category_id=242&keep_search_criteria=true&order=new&hide_expired=true',
@@ -554,6 +558,40 @@ const sendSimpleMessages = async (ids, id, message = '') => {
   await browser.close()
   console.log('Browser closed...')
 }
+
+const createAcc = async (mail, no, i, eventEmitter) => {
+  await Mails.findOneAndUpdate({ user: mail }, { no: no + i })
+  const { page, browser } = await startBrowserWithProxy(null)
+  eventEmitter.on('newmail', (payload) => {
+    console.log(payload)
+  })
+  await page.goto(registerUrl, { timeout: 60000 })
+  page.evaluate(async () => {
+    document.querySelector('#email_verification_key').value = `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`;
+    await delay(1000);
+    document.querySelector('.button-submit').click();
+  })
+}
+
+const startAccAutoCreate = async (id, no) => {
+  if (!no || no < 1) return
+  var mail = await Mails.findById(id)
+  const eventEmitter = new EventEmitter();
+  eventEmitter.on('imapstarted', (payload) => {
+    console.log('imap started')
+    createAcc(mail.user, mail.no, 1, eventEmitter)
+  })
+  eventEmitter.on('done', (payload) => {
+    if (payload.i == no) {
+      closeImap()
+      eventEmitter.removeAllListeners()
+    } else {
+      createAcc(mail.user, mail.no, payload.i + 1, eventEmitter)
+    }
+  })
+  startImap(mail.user, eventEmitter)
+}
+
 const startLocalAccount = async (proxy, auth, chrome) => {
   var params = {
     headless: false,
@@ -564,4 +602,4 @@ const startLocalAccount = async (proxy, auth, chrome) => {
   const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
   doLoginWithAuth(page, auth);
 }
-module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages }
+module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages, startAccAutoCreate }
