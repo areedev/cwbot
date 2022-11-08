@@ -566,6 +566,8 @@ const createAcc = async (mail, no, i, eventEmitter) => {
     console.log(payload)
   })
   await page.goto(registerUrl, { timeout: 60000 })
+  var url = await page.evaluate(() => document.location.href);
+  console.log(url)
   page.evaluate((mail) => {
     document.querySelector('#email_verification_key').value = mail;
   }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
