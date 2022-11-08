@@ -26,18 +26,28 @@ const delay = (time) => {
     setTimeout(resolve, time);
   })
 }
-const startBrowserWithProxy = async (proxy, params = {
-  defaultViewport: null,
-  headless: true,
-  devtools: false,
-}, args = [
-  '--disable-gpu',
-  '--disable-dev-shm-usage',
-  '--no-sandbox',
-  '--disable-setuid-sandbox',
-  '--ignore-certificate-errors',
-  '--ignore-certificate-errors-spki-list'
-], executablePath = '') => {
+const startBrowserWithProxy = async (proxy,
+  params = {
+    defaultViewport: null,
+    headless: true,
+    devtools: false,
+  }, args = [
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--ignore-certificate-errors',
+    '--ignore-certificate-errors-spki-list'
+  ]
+
+  // params = {
+  //   headless: false,
+  //   defaultViewport: null
+  // },
+  // args = ['--start-maximized']
+  
+  , executablePath = ''
+) => {
 
   if (proxy) {
     args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
@@ -568,8 +578,13 @@ const createAcc = async (mail, no, i, eventEmitter) => {
   await page.goto(registerUrl, { timeout: 60000 })
   var url = await page.evaluate(() => document.location.href);
   console.log(url)
-  page.evaluate((mail) => {
-    document.querySelector('#email_verification_key').value = mail;
+  await page.waitForSelector('#email_verification_key');
+  await page.click('#email_verification_key');
+  page.evaluate(async (mail) => {
+    var input = document.querySelector('#email_verification_key');
+    input.value = mail;
+    const event = new Event('change');
+    input.dispatchEvent(event);
   }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
   await delay(1000);
   page.evaluate(() => {
