@@ -25,10 +25,10 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
   // }
   const mail = await Emails.findOne({ user: source })
   console.log(message.title, message.from.address, message.to[0].name, `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`);
-  if (message.title != '【クラウドワークス】新規会員登録を完了してください' ||
-    message.from.address != 'no-reply@crowdworks.jp' ||
-    message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
-    return;
+  // if (message.title != '【クラウドワークス】新規会員登録を完了してください' ||
+  //   message.from.address != 'no-reply@crowdworks.jp' ||
+  //   message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
+  //   return;
   
   eventEmitter.emit('newmail', { to: message.to[0].name, content })
   // try {
