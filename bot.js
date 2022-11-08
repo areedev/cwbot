@@ -283,7 +283,7 @@ const bot = async (id, pages) => {
   await doLogin(page, id);
   for (var type of types) {
     for (let i = 1; i <= pages; i++)
-      await goJobsPage(page, id, type, pages);
+      await goJobsPage(page, id, type, i);
   }
   await browser.close();
 }
