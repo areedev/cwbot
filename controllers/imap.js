@@ -29,8 +29,8 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
     message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
     return;
   const pos = content.toString().indexOf('https://crowdworks.jp/user/new?key')
-  const temp = content.toString().substring(pos, 100)
-  
+  const temp = content.toString().substring(pos, pos + 100)
+
   console.log(temp.substring(0, temp.lastIndexOf('</a>')))
   eventEmitter.emit('newmail', { to: message.to[0].name, content })
   // try {
