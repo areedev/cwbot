@@ -21,7 +21,7 @@ const handleMail = async (content, type, message, source) => {
   //   to: SLACK.MAIL,
   //   subject: message.title
   // }
-  console.log(message)
+  console.log(message, type, content)
   if (message.title != '【クラウドワークス】新規会員登録を完了してください' || message.from.address != 'no-reply@crowdworks.jp' || type != "text")
     return;
   // try {
