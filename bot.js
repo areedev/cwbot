@@ -596,8 +596,8 @@ const createAcc = async (mail, no, i, eventEmitter) => {
       if (payload.link) {
         console.log(payload.to + ' Email verifying...')
         await page.goto(payload.link, { timeout: 60000 });
-        var url = await page.evaluate(() => document.location.href);
-        console.log(url);
+        // var url = await page.evaluate(() => document.location.href);
+        // console.log(url);
         page.on('dialog', async dialog => {
           console.log('Leaving page...');
           await dialog.accept();
