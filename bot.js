@@ -605,6 +605,8 @@ const createAcc = async (mail, no, i, eventEmitter) => {
           if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
           await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
           await Mails.findOneAndUpdate({ user: mail }, { no: no + i });
+          await browser.close()
+          console.log('Browser closed')
           eventEmitter.emit('done', { i })
         });
         await page.evaluate(() => {
@@ -668,6 +670,8 @@ const createAcc = async (mail, no, i, eventEmitter) => {
     });
   } catch (e) {
     console.log('Error in creating acc...', e);
+    await browser.close()
+    console.log('Browser closed')
     eventEmitter.emit('done', { i });
   }
 }
