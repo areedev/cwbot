@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const dbConfig = require('./db/config')
 const puppeteer = require('puppeteer-extra');
 const { startImap } = require('./controllers/imap');
+const { startAccAutoCreate } = require('./bot');
 
 const fun = async () => {
   mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -29,7 +30,9 @@ const fun = async () => {
   // }
   // var args = ['--start-maximized']
   // const browser = await puppeteer.launch({ ...params, args, executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' });
-  startImap('omnisuperadm1@gmail.com', 1)
+  // startImap('omnisuperadm1@gmail.com', 1)
+
+  startAccAutoCreate('', 1)
 
 }
 

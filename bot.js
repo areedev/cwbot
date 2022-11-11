@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer-extra');
+const RecaptchaPlugin = require('puppeteer-extra-plugin-recaptcha')
 const EventEmitter = require('events');
 const moment = require('moment');
 
@@ -8,7 +9,20 @@ const BadClients = require('./db/badclients');
 const Keywords = require('./db/keywords');
 const Visits = require('./db/visits')
 const Mails = require('./db/mails');
+var userAgent = require('user-agents');
 const { startImap, closeImap } = require('./controllers/imap');
+
+puppeteer.use(
+  RecaptchaPlugin({
+    provider: {
+      id: '2captcha',
+      // token: '1f5625b7bce2ba96e85ef0f29409f302', // REPLACE THIS WITH YOUR OWN 2CAPTCHA API KEY ⚡
+      token: '809b981917c5661aa66fb6caf5cdbf8a' // REPLACE THIS WITH YOUR OWN 2CAPTCHA API KEY ⚡
+    },
+    visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
+  })
+);
+
 const loginUrl = 'https://crowdworks.jp/login?ref=toppage_hedder'
 
 const registerUrl = 'https://crowdworks.jp/user/new_email?ref=toppage_hedder'
@@ -37,15 +51,20 @@ const startBrowserWithProxy = async (proxy,
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--ignore-certificate-errors',
-    '--ignore-certificate-errors-spki-list'
+    '--ignore-certificate-errors-spki-list',
+    '--disable-web-security',
+    '--disable-features=IsolateOrigins,site-per-process'
   ]
 
   // params = {
   //   headless: false,
   //   defaultViewport: null
   // },
-  // args = ['--start-maximized']
-  
+  // args = ['--start-maximized',
+  //   '--disable-web-security',
+  //   '--disable-features=IsolateOrigins,site-per-process'
+  // ]
+
   , executablePath = ''
 ) => {
 
@@ -328,7 +347,7 @@ const sendSimpleMessage = async (page, contractId, message) => {
         await page.click(selector);
         page.keyboard.type(value);
       }
-      await delay(2000);
+      await delay(6000);
       await setMessage(page, '#pack-message-thread #message_body', message)
       await delay(2000);
       await page.evaluate(() => {
@@ -570,26 +589,87 @@ const sendSimpleMessages = async (ids, id, message = '') => {
 }
 
 const createAcc = async (mail, no, i, eventEmitter) => {
-  await Mails.findOneAndUpdate({ user: mail }, { no: no + i })
-  const { page, browser } = await startBrowserWithProxy(null)
-  eventEmitter.on('newmail', (payload) => {
-    console.log(payload)
-  })
-  await page.goto(registerUrl, { timeout: 60000 })
-  var url = await page.evaluate(() => document.location.href);
-  console.log(url)
-  await page.waitForSelector('#email_verification_key');
-  await page.click('#email_verification_key');
-  page.evaluate(async (mail) => {
-    var input = document.querySelector('#email_verification_key');
-    input.value = mail;
-    const event = new Event('change');
-    input.dispatchEvent(event);
-  }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
-  await delay(1000);
-  page.evaluate(() => {
-    document.querySelector('.button-submit').click();
-  });
+  try {
+    const { page, browser } = await startBrowserWithProxy(null)
+
+    eventEmitter.on('newmail', async (payload) => {
+      if (payload.link) {
+        console.log(payload.to + ' Email verifying...')
+        await page.goto(payload.link, { timeout: 60000 });
+        var url = await page.evaluate(() => document.location.href);
+        console.log(url);
+        page.on('dialog', async dialog => {
+          console.log('Leaving page...');
+          await dialog.accept();
+          const url = await page.evaluate(() => document.location.href);
+          if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
+          await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
+          await Mails.findOneAndUpdate({ user: mail }, { no: no + i });
+          eventEmitter.emit('done', { i })
+        });
+        await page.evaluate(() => {
+          document.querySelector('#user_password').value = 'RootRoot123$';
+          document.querySelector('#user_password_confirmation').value = 'RootRoot123$';
+          document.querySelector('#user_role_employee').click();
+          document.querySelector('#user_birthday_1i').value = '1990';
+          document.querySelector('#user_birthday_2i').value = '8';
+          document.querySelector('#user_birthday_3i').value = '30';
+
+          document.querySelector('#user_profile_attributes_usertype_individual').click();
+
+          document.querySelector('#user_profile_attributes_last_name').value = '石田';
+          document.querySelector('#user_profile_attributes_first_name').value = '太郎';
+          document.querySelector('#user_profile_attributes_last_name_kana').value = 'いしだ';
+          document.querySelector('#user_profile_attributes_first_name_kana').value = 'たろ';
+          document.querySelector('#user_profile_attributes_sex_none').click();
+          document.querySelector('#user_profile_attributes_zip').value = '1300024';
+          document.querySelector('#user_profile_attributes_prefecture_id').value = '13';
+          document.querySelector('#user_profile_attributes_address').value = '墨田区菊川';
+          document.querySelector('#user_terms_of_service').click();
+
+          document.querySelector("#user_occupation_").value = "engineer";
+          document.querySelector("#user_occupation_").dispatchEvent(new Event('change'));
+          document.querySelector('#occupation_id_1').click();
+          document.querySelector('#occupation_id_4').click();
+          document.querySelector('#occupation_id_3').click();
+          document.querySelector('#occupation_id_52').click();
+          document.querySelector('#occupation_id_53').click();
+          document.querySelector('#occupation_id_98').click();
+          document.querySelector('#occupation_id_48').click();
+          document.querySelector('#occupation_id_99').click();
+          document.querySelector('#occupation_id_5').click();
+          document.querySelector('#occupation_id_6').click();
+          document.querySelector('#occupation_id_49').click();
+          document.querySelector('#occupation_id_50').click();
+          document.querySelector('#occupation_id_51').click();
+          document.querySelector('#occupation_id_15').click();
+          document.querySelector('#occupation_id_7').click();
+        });
+        await page.solveRecaptchas();
+        console.log("Recaptcha solved...")
+        await delay(1000)
+        await page.evaluate(() => {
+          document.querySelector("input[type='submit']").click()
+        })
+      }
+    })
+    await page.goto(registerUrl, { timeout: 60000 })
+    await page.waitForSelector('#email_verification_key');
+    await page.click('#email_verification_key');
+    page.evaluate(async (mail) => {
+      var input = document.querySelector('#email_verification_key');
+      input.value = mail;
+      const event = new Event('change');
+      input.dispatchEvent(event);
+    }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
+    await delay(1000);
+    page.evaluate(() => {
+      document.querySelector('.button-submit').click();
+    });
+  } catch (e) {
+    console.log('Error in creating acc...', e);
+    eventEmitter.emit('done', { i });
+  }
 }
 
 const startAccAutoCreate = async (id, no) => {
@@ -597,7 +677,7 @@ const startAccAutoCreate = async (id, no) => {
   var mail = await Mails.findById(id)
   const eventEmitter = new EventEmitter();
   eventEmitter.on('imapstarted', (payload) => {
-    console.log('imap started')
+    console.log('Imap started')
     createAcc(mail.user, mail.no, 1, eventEmitter)
   })
   eventEmitter.on('done', (payload) => {

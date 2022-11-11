@@ -30,9 +30,7 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
     return;
   const pos = content.toString().indexOf('https://crowdworks.jp/user/new?key')
   const temp = content.toString().substring(pos, pos + 100)
-
-  console.log(temp.substring(0, temp.lastIndexOf('</a>')))
-  eventEmitter.emit('newmail', { to: message.to[0].name, content })
+  eventEmitter.emit('newmail', { to: message.to[0].name, link: temp.substring(0, temp.lastIndexOf('</a>')) })
   // try {
   //   await sentNotification();
   // } catch (e) {
