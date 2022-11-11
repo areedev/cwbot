@@ -26,8 +26,10 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
   const mail = await Emails.findOne({ user: source })
   console.log(
     message.title.indexOf('会員登録') < 0,
-      message.from.address != 'no-reply@crowdworks.jp',
-      message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`
+    message.from.address != 'no-reply@crowdworks.jp',
+    message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`,
+    `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`,
+    message.to[0].name
   )
   if (message.title.indexOf('会員登録') < 0 ||
     message.from.address != 'no-reply@crowdworks.jp' ||
