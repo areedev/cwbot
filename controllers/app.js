@@ -17,6 +17,7 @@ const Proxies = require('../db/proxies')
 const Contracts = require('../db/contracts')
 const Jobs = require('../db/jobs')
 const Mails = require('../db/mails')
+const Tags = require('../db/tags')
 var intervals = [];
 var interval = null;
 var tickTime;
@@ -168,7 +169,8 @@ const getAccount = async (req, res) => {
     if (!id) return res.status(400).json({ success: false, error: 'id is required' })
     var account = await Accounts.findById(id);
     const proxies = await Proxies.find();
-    res.json({ success: true, result: { account, proxies } })
+    const tags = await Tags.find()
+    res.json({ success: true, result: { account, proxies, tags } })
   } catch (e) {
     console.log(e)
     res.status(400).json({ error: e.message })
@@ -177,7 +179,29 @@ const getAccount = async (req, res) => {
 }
 const getAccounts = async (req, res) => {
   try {
-    var accounts = await Accounts.find({}, 'username blocked client imgPath tag');
+    const groupBy = (xs, key) => {
+      return xs.reduce(function (rv, x) {
+        (rv[x[key]] = rv[x[key]] || []).push(x);
+        return rv;
+      }, {});
+    };
+    const { contract } = req.body
+    var accounts = await Accounts.find({}, 'username blocked client imgPath tag tagId').populate('tagId');
+    if (contract) {
+      var contracts = await Contracts.find()
+      var wcontracts = groupBy(contracts, 'workerId')
+      var ccontracts = groupBy(contracts, 'clientId')
+      console.log(ccontracts)
+      accounts = JSON.parse(JSON.stringify(accounts));
+      accounts = accounts.map(a => {
+        const acs = (a.client ? ccontracts[a._id] : wcontracts[a._id]) || []                        // Account contracts
+        var ca = [0, 0, 0, 0, 0, 0, 0, 0]                          // contract array
+        for (const ac of acs) {
+          ca[ac.step]++
+        }
+        return { ...a, ca }
+      })
+    }
     res.json({ success: true, accounts })
   } catch (e) {
     console.log(e)
@@ -200,6 +224,17 @@ const saveProxy = async (req, res) => {
     var { id } = req.params
     var proxy = req.body.proxy == '' ? null : req.body.proxy
     await Accounts.findByIdAndUpdate(id, { proxy: proxy })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const saveTag = async (req, res) => {
+  try {
+    var { id } = req.params
+    var tagId = req.body.tagId == '' ? null : req.body.tagId
+    await Accounts.findByIdAndUpdate(id, { tagId })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -490,7 +525,8 @@ const getPublicSettings = async (req, res) => {
     var categories = await Categories.find();
     var words = await Words.find().sort([['createdAt', -1]]);
     var mails = await Mails.find({}, 'user no');
-    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories, mails } })
+    var tags = await Tags.find();
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories, mails, tags } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -566,7 +602,8 @@ const getContracts = async (req, res) => {
     const { client } = await Accounts.findById(id)
     if (client) contracts = await Contracts.find({ clientId: id }).populate('workerId').populate('clientId')
     else contracts = await Contracts.find({ workerId: id }).populate('workerId').populate('clientId')
-    res.json({ success: true, result: contracts, client })
+    const tags = await Tags.find()
+    res.json({ success: true, result: contracts, client, tags })
   } catch (e) {
     console.log(e)
     res.json({ success: false, error: e.message })
@@ -642,10 +679,42 @@ const addJob = async (req, res) => {
 }
 
 
+const addTag = async (req, res) => {
+  try {
+    const { name, color } = req.body
+    const tag = await Tags.create({ name, color })
+    res.json({ success: true, tag })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+const updateTag = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { name, color } = req.body
+    const tag = await Tags.findByIdAndUpdate(id, { name, color })
+    res.json({ success: true, tag })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+const removeTag = async (req, res) => {
+  try {
+    const { id } = req.params
+    await Tags.findByIdAndRemove(id)
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
 const firstpromoterWebhook = async (req, res) => {
   console.log(req.body)
   res.json({});
 }
+
 const startLocalChrome = async (req, res) => {
   try {
     const { proxy, auth, chrome } = req.body
@@ -689,6 +758,7 @@ module.exports = {
   addBadClient,
   saveCredentials,
   saveProxy,
+  saveTag,
   setAuto,
   makeBlocked,
   saveBids,
@@ -708,5 +778,8 @@ module.exports = {
   manualEscrow,
   sendSimpleMessage,
   setImgPath,
-  startAutoCreate
+  startAutoCreate,
+  addTag,
+  updateTag,
+  removeTag
 }

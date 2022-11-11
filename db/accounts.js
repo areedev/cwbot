@@ -7,6 +7,7 @@ var schema = mongoose.Schema({
   bids: { type: Object, default: { web: '', app: '', sys: '', ec: '' } },
   auto: { type: Boolean, default: false },
   proxy: { type: mongoose.Types.ObjectId, ref: 'proxies', default: null },
+  tagId: { type: mongoose.Types.ObjectId, ref: 'tags', default: null },
   status: { type: String, default: 'stopped' },
   blocked: { type: Boolean, default: false },
   client: { type: Boolean, default: false },
