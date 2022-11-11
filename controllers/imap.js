@@ -24,16 +24,9 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
   //   subject: message.title
   // }
   const mail = await Emails.findOne({ user: source })
-  console.log(
-    message.title.indexOf('会員登録') < 0,
-    message.from.address != 'no-reply@crowdworks.jp',
-    message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`,
-    `$${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no + 1}@${mail.user.substring(mail.user.indexOf('@') + 1)}$`,
-    `$${message.to[0].name}$`
-  )
   if (message.title.indexOf('会員登録') < 0 ||
     message.from.address != 'no-reply@crowdworks.jp' ||
-    message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
+    message.to[0].name != `${mail.user.substring(0, mail.user.indexOf('@'))}+${mail.no + 1}@${mail.user.substring(mail.user.indexOf('@') + 1)}`)
     return;
   const pos = content.toString().indexOf('https://crowdworks.jp/user/new?key')
   const temp = content.toString().substring(pos, pos + 100)
