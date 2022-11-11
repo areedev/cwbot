@@ -592,69 +592,6 @@ const createAcc = async (mail, no, i, eventEmitter) => {
   try {
     const { page, browser } = await startBrowserWithProxy(null)
 
-    eventEmitter.on('newmail', async (payload) => {
-      if (payload.link) {
-        console.log(payload.to + ' Email verifying...')
-        await page.goto(payload.link, { timeout: 60000 });
-        // var url = await page.evaluate(() => document.location.href);
-        // console.log(url);
-        page.on('dialog', async dialog => {
-          console.log('Leaving page...');
-          await dialog.accept();
-          const url = await page.evaluate(() => document.location.href);
-          if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
-          await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
-          await Mails.findOneAndUpdate({ user: mail }, { no: no + i });
-          await browser.close()
-          console.log('Browser closed')
-          eventEmitter.emit('done', { i })
-        });
-        await page.evaluate(() => {
-          document.querySelector('#user_password').value = 'RootRoot123$';
-          document.querySelector('#user_password_confirmation').value = 'RootRoot123$';
-          document.querySelector('#user_role_employee').click();
-          document.querySelector('#user_birthday_1i').value = '1990';
-          document.querySelector('#user_birthday_2i').value = '8';
-          document.querySelector('#user_birthday_3i').value = '30';
-
-          document.querySelector('#user_profile_attributes_usertype_individual').click();
-
-          document.querySelector('#user_profile_attributes_last_name').value = '石田';
-          document.querySelector('#user_profile_attributes_first_name').value = '太郎';
-          document.querySelector('#user_profile_attributes_last_name_kana').value = 'いしだ';
-          document.querySelector('#user_profile_attributes_first_name_kana').value = 'たろ';
-          document.querySelector('#user_profile_attributes_sex_none').click();
-          document.querySelector('#user_profile_attributes_zip').value = '1300024';
-          document.querySelector('#user_profile_attributes_prefecture_id').value = '13';
-          document.querySelector('#user_profile_attributes_address').value = '墨田区菊川';
-          document.querySelector('#user_terms_of_service').click();
-
-          document.querySelector("#user_occupation_").value = "engineer";
-          document.querySelector("#user_occupation_").dispatchEvent(new Event('change'));
-          document.querySelector('#occupation_id_1').click();
-          document.querySelector('#occupation_id_4').click();
-          document.querySelector('#occupation_id_3').click();
-          document.querySelector('#occupation_id_52').click();
-          document.querySelector('#occupation_id_53').click();
-          document.querySelector('#occupation_id_98').click();
-          document.querySelector('#occupation_id_48').click();
-          document.querySelector('#occupation_id_99').click();
-          document.querySelector('#occupation_id_5').click();
-          document.querySelector('#occupation_id_6').click();
-          document.querySelector('#occupation_id_49').click();
-          document.querySelector('#occupation_id_50').click();
-          document.querySelector('#occupation_id_51').click();
-          document.querySelector('#occupation_id_15').click();
-          document.querySelector('#occupation_id_7').click();
-        });
-        await page.solveRecaptchas();
-        console.log("Recaptcha solved...")
-        await delay(1000)
-        await page.evaluate(() => {
-          document.querySelector("input[type='submit']").click()
-        })
-      }
-    })
     await page.goto(registerUrl, { timeout: 60000 })
     await page.waitForSelector('#email_verification_key');
     await page.click('#email_verification_key');
@@ -669,13 +606,78 @@ const createAcc = async (mail, no, i, eventEmitter) => {
       document.querySelector('.button-submit').click();
     });
   } catch (e) {
-    console.log('Error in creating acc...', e);
-    await browser.close()
+    console.log('Error in creating acc...', e)
     console.log('Browser closed')
-    eventEmitter.emit('done', { i });
   }
 }
+const completeRegister = async (payload) => {
+  try {
+    if (payload.link) {
+      const { page, browser } = await startBrowserWithProxy(null)
+      console.log(payload.to + ' Email verifying...')
+      await page.goto(payload.link, { timeout: 60000 });
+      var url = await page.evaluate(() => document.location.href);
+      console.log(url);
+      page.on('dialog', async dialog => {
+        console.log('Leaving page...');
+        await dialog.accept();
+        const url = await page.evaluate(() => document.location.href);
+        if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
+        await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
+        await Mails.findOneAndUpdate({ user: mail }, { no: no + i });
+        await browser.close()
+        console.log('Browser closed')
+        eventEmitter.emit('done', { i })
+      });
+      await page.evaluate(() => {
+        document.querySelector('#user_password').value = 'RootRoot123$';
+        document.querySelector('#user_password_confirmation').value = 'RootRoot123$';
+        document.querySelector('#user_role_employee').click();
+        document.querySelector('#user_birthday_1i').value = '1990';
+        document.querySelector('#user_birthday_2i').value = '8';
+        document.querySelector('#user_birthday_3i').value = '30';
 
+        document.querySelector('#user_profile_attributes_usertype_individual').click();
+
+        document.querySelector('#user_profile_attributes_last_name').value = '石田';
+        document.querySelector('#user_profile_attributes_first_name').value = '太郎';
+        document.querySelector('#user_profile_attributes_last_name_kana').value = 'いしだ';
+        document.querySelector('#user_profile_attributes_first_name_kana').value = 'たろ';
+        document.querySelector('#user_profile_attributes_sex_none').click();
+        document.querySelector('#user_profile_attributes_zip').value = '1300024';
+        document.querySelector('#user_profile_attributes_prefecture_id').value = '13';
+        document.querySelector('#user_profile_attributes_address').value = '墨田区菊川';
+        document.querySelector('#user_terms_of_service').click();
+
+        document.querySelector("#user_occupation_").value = "engineer";
+        document.querySelector("#user_occupation_").dispatchEvent(new Event('change'));
+        document.querySelector('#occupation_id_1').click();
+        document.querySelector('#occupation_id_4').click();
+        document.querySelector('#occupation_id_3').click();
+        document.querySelector('#occupation_id_52').click();
+        document.querySelector('#occupation_id_53').click();
+        document.querySelector('#occupation_id_98').click();
+        document.querySelector('#occupation_id_48').click();
+        document.querySelector('#occupation_id_99').click();
+        document.querySelector('#occupation_id_5').click();
+        document.querySelector('#occupation_id_6').click();
+        document.querySelector('#occupation_id_49').click();
+        document.querySelector('#occupation_id_50').click();
+        document.querySelector('#occupation_id_51').click();
+        document.querySelector('#occupation_id_15').click();
+        document.querySelector('#occupation_id_7').click();
+      });
+      await page.solveRecaptchas();
+      console.log("Recaptcha solved...")
+      await delay(1000)
+      await page.evaluate(() => {
+        document.querySelector("input[type='submit']").click()
+      })
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
 const startAccAutoCreate = async (id, no) => {
   if (!no || no < 1) return
   var mail = await Mails.findById(id)
@@ -684,6 +686,7 @@ const startAccAutoCreate = async (id, no) => {
     console.log('Imap started')
     createAcc(mail.user, mail.no, 1, eventEmitter)
   })
+  eventEmitter.on('newmail', completeRegister)
   eventEmitter.on('done', (payload) => {
     if (payload.i == no) {
       closeImap()
