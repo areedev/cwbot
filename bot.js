@@ -590,7 +590,7 @@ const sendSimpleMessages = async (ids, id, message = '') => {
   console.log('Browser closed...')
 }
 
-const createAcc = async (mail, no, i, eventEmitter) => {
+const createAcc = async (mail, no) => {
   try {
     const { page, browser } = await startBrowserWithProxy(null)
 
@@ -602,7 +602,7 @@ const createAcc = async (mail, no, i, eventEmitter) => {
       input.value = mail;
       const event = new Event('change');
       input.dispatchEvent(event);
-    }, `${mail.substring(0, mail.indexOf('@'))}+${no + i}@${mail.substring(mail.indexOf('@') + 1)}`)
+    }, `${mail.substring(0, mail.indexOf('@'))}+${no}@${mail.substring(mail.indexOf('@') + 1)}`)
     await delay(1000);
     page.evaluate(() => {
       document.querySelector('.button-submit').click();
@@ -627,10 +627,11 @@ const completeRegister = async (payload) => {
         const url = await page.evaluate(() => document.location.href);
         if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
         await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
+        await delay(2000)
         await Mails.findOneAndUpdate({ user: payload.origin }, { no: payload.no });
         await browser.close()
         console.log('Browser closed')
-        eventEmitter.emit('done', { i })
+        eventEmitter.emit('done', { no: payload.no })
       });
       await page.evaluate(() => {
         document.querySelector('#user_password').value = 'RootRoot123$';
@@ -686,15 +687,15 @@ const startAccAutoCreate = async (id, no) => {
   var mail = await Mails.findById(id)
   eventEmitter.on('imapstarted', (payload) => {
     console.log('Imap started')
-    createAcc(mail.user, mail.no, 1, eventEmitter)
+    createAcc(mail.user, mail.no + 1)
   })
   eventEmitter.on('newmail', completeRegister)
   eventEmitter.on('done', (payload) => {
-    if (payload.i == no) {
+    if (payload.no == mail.no + no) {
       closeImap()
       eventEmitter.removeAllListeners()
     } else {
-      createAcc(mail.user, mail.no, payload.i + 1, eventEmitter)
+      createAcc(mail.user, payload.no + 1)
     }
   })
   startImap(mail.user, eventEmitter)
