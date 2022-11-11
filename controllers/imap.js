@@ -32,7 +32,7 @@ const handleMail = async (content, type, message, source, eventEmitter) => {
   const temp = content.toString().substring(pos, pos + 100)
   const link = temp.substring(0, temp.lastIndexOf('</a>'))
   console.log(link)
-  eventEmitter.emit('newmail', { to: message.to[0].name, link })
+  eventEmitter.emit('newmail', { to: message.to[0].name, origin: mail.user, no: no + 1, link })
   // try {
   //   await sentNotification();
   // } catch (e) {

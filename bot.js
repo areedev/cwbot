@@ -12,6 +12,8 @@ const Mails = require('./db/mails');
 var userAgent = require('user-agents');
 const { startImap, closeImap } = require('./controllers/imap');
 
+const eventEmitter = new EventEmitter();
+
 puppeteer.use(
   RecaptchaPlugin({
     provider: {
@@ -621,10 +623,11 @@ const completeRegister = async (payload) => {
       page.on('dialog', async dialog => {
         console.log('Leaving page...');
         await dialog.accept();
+        await page.waitForSelector("form input[type='submit']");
         const url = await page.evaluate(() => document.location.href);
         if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
         await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
-        await Mails.findOneAndUpdate({ user: mail }, { no: no + i });
+        await Mails.findOneAndUpdate({ user: payload.origin }, { no: payload.no });
         await browser.close()
         console.log('Browser closed')
         eventEmitter.emit('done', { i })
@@ -681,7 +684,6 @@ const completeRegister = async (payload) => {
 const startAccAutoCreate = async (id, no) => {
   if (!no || no < 1) return
   var mail = await Mails.findById(id)
-  const eventEmitter = new EventEmitter();
   eventEmitter.on('imapstarted', (payload) => {
     console.log('Imap started')
     createAcc(mail.user, mail.no, 1, eventEmitter)
