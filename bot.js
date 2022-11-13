@@ -349,9 +349,9 @@ const sendSimpleMessage = async (page, contractId, message) => {
         await page.click(selector);
         page.keyboard.type(value);
       }
-      await delay(6000);
+      await delay(1000);
       await setMessage(page, '#pack-message-thread #message_body', message)
-      await delay(2000);
+      await delay(10000);
       await page.evaluate(() => {
         const div = document.querySelector(".cw-message-thread");
         div.click();
