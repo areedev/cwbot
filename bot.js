@@ -13,6 +13,7 @@ var userAgent = require('user-agents');
 const { startImap, closeImap } = require('./controllers/imap');
 
 const eventEmitter = new EventEmitter();
+var tag = ''
 
 puppeteer.use(
   RecaptchaPlugin({
@@ -620,6 +621,7 @@ const completeRegister = async (payload) => {
       await page.goto(payload.link, { timeout: 60000 });
       var url = await page.evaluate(() => document.location.href);
       console.log(url);
+      var username = '';
       page.on('dialog', async dialog => {
         console.log('Leaving page...');
         await dialog.accept();
@@ -628,7 +630,10 @@ const completeRegister = async (payload) => {
         if (url.indexOf('crowdworks.jp/user/preview') < 0) return console.log('Failed to finish register...');
         await page.evaluate(() => { const btn = document.querySelector("form input[type='submit']"); btn.click(); });
         await delay(2000)
+        console.log('Updating mail...')
         await Mails.findOneAndUpdate({ user: payload.origin }, { no: payload.no });
+        console.log('Creating account data...')
+        await Accounts.create({ auth: { username: payload.to, password: 'RootRoot123$'}, tagId: tag, username });
         await browser.close()
         console.log('Browser closed')
         eventEmitter.emit('done', { no: payload.no })
@@ -670,7 +675,9 @@ const completeRegister = async (payload) => {
         document.querySelector('#occupation_id_51').click();
         document.querySelector('#occupation_id_15').click();
         document.querySelector('#occupation_id_7').click();
+
       });
+      username = await page.evaluate(() => document.querySelector("#user_username").value);
       await page.solveRecaptchas();
       console.log("Recaptcha solved...")
       await delay(1000)
@@ -682,7 +689,8 @@ const completeRegister = async (payload) => {
     console.log(e)
   }
 }
-const startAccAutoCreate = async (id, no) => {
+const startAccAutoCreate = async (id, no, tagId) => {
+  tag = tagId
   if (!no || no < 1) return
   var mail = await Mails.findById(id)
   eventEmitter.on('imapstarted', (payload) => {

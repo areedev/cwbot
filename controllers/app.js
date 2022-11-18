@@ -586,8 +586,8 @@ const removeProxy = async (req, res) => {
 const startAutoCreate = async (req, res) => {
   try {
     const { id } = req.params
-    var { no } = req.body;
-    startAccAutoCreate(id, no)
+    var { no, tagId } = req.body;
+    startAccAutoCreate(id, no, tagId)
     res.json({ success: true })
   } catch (e) {
     console.log(e)
