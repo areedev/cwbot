@@ -10,6 +10,7 @@ const jwt = require('jwt-simple')
 
 const Manuallinks = require('../db/manuallinks')
 const Keywords = require('../db/keywords')
+const Skills = require('../db/skills')
 const Categories = require('../db/category')
 const Words = require('../db/dictionary')
 const BadClients = require('../db/badclients')
@@ -478,12 +479,34 @@ const deleteKeyword = async (req, res) => {
     res.json({ success: false })
   }
 }
+const deleteSkill = async (req, res) => {
+  try {
+    var skill = await Skills.findById(req.params.id);
+    if (!skill) return res.json({ success: false, error: 'Invalid keyword id' })
+    await Skills.deleteOne({ _id: req.params.id });
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 const addKeyword = async (req, res) => {
   try {
     var keyword = await Keywords.findOne({ keyword: req.body.keyword });
     if (keyword) return res.json({ success: false, error: 'Already registered' })
     keyword = await Keywords.create({ keyword: req.body.keyword, createdAt: moment.now() });
     res.json({ success: true, result: keyword })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const addSkill = async (req, res) => {
+  try {
+    var skill = await Skills.findOne({ skill: req.body.skill });
+    if (skill) return res.json({ success: false, error: 'Already registered' })
+    skill = await Skills.create({ skill: req.body.skill, createdAt: moment.now() });
+    res.json({ success: true, result: skill })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -522,11 +545,12 @@ const getPublicSettings = async (req, res) => {
     var badClients = await BadClients.find();
     var manualLinks = await Manuallinks.find().sort([['createdAt', -1]]);
     var keywords = await Keywords.find().sort([['createdAt', -1]]);
+    var skills = await Skills.find().sort([['createdAt', -1]]);
     var categories = await Categories.find();
     var words = await Words.find().sort([['createdAt', -1]]);
     var mails = await Mails.find({}, 'user no');
     var tags = await Tags.find();
-    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, words, categories, mails, tags } })
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, skills, words, categories, mails, tags } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -781,5 +805,7 @@ module.exports = {
   startAutoCreate,
   addTag,
   updateTag,
-  removeTag
+  removeTag,
+  addSkill,
+  deleteSkill
 }
