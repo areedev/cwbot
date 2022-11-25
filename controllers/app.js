@@ -4,7 +4,7 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages, startAccAutoCreate } = require('../bot')
+const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages, startAccAutoCreate, addAccSkills } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 
@@ -192,7 +192,6 @@ const getAccounts = async (req, res) => {
       var contracts = await Contracts.find()
       var wcontracts = groupBy(contracts, 'workerId')
       var ccontracts = groupBy(contracts, 'clientId')
-      console.log(ccontracts)
       accounts = JSON.parse(JSON.stringify(accounts));
       accounts = accounts.map(a => {
         const acs = (a.client ? ccontracts[a._id] : wcontracts[a._id]) || []                        // Account contracts
@@ -565,6 +564,26 @@ const getProxies = async (req, res) => {
     res.json({ success: false })
   }
 }
+const getSkills = async (req, res) => {
+  try {
+    var skills = await Skills.find()
+    res.json({ success: true, result: skills })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
+const addSkills = async (req, res) => {
+  try {
+    const { skills, id } = req.body
+    console.log(skills, id)
+    addAccSkills(skills, id)
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false })
+  }
+}
 const addProxy = async (req, res) => {
   try {
     var { ip, port, type, username, password } = req.body
@@ -610,8 +629,8 @@ const removeProxy = async (req, res) => {
 const startAutoCreate = async (req, res) => {
   try {
     const { id } = req.params
-    var { no, tagId } = req.body;
-    startAccAutoCreate(id, no, tagId)
+    var { no, tagId, proxyId } = req.body;
+    startAccAutoCreate(id, no, tagId, proxyId)
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -775,6 +794,8 @@ module.exports = {
   getAuto,
   registerManualLink,
   getProxies,
+  getSkills,
+  addSkills,
   addProxy,
   updateProxy,
   removeProxy,

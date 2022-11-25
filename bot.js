@@ -9,6 +9,7 @@ const BadClients = require('./db/badclients');
 const Keywords = require('./db/keywords');
 const Visits = require('./db/visits')
 const Mails = require('./db/mails');
+const Skills = require('./db/skills');
 var userAgent = require('user-agents');
 const { startImap, closeImap } = require('./controllers/imap');
 
@@ -633,9 +634,10 @@ const completeRegister = async (payload) => {
         console.log('Updating mail...')
         await Mails.findOneAndUpdate({ user: payload.origin }, { no: payload.no });
         console.log('Creating account data...')
-        await Accounts.create({ auth: { username: payload.to, password: 'RootRoot123$'}, tagId: tag, username });
+        await Accounts.create({ auth: { username: payload.to, password: 'RootRoot123$' }, tagId: tag, username });
         await browser.close()
         console.log('Browser closed')
+        await delay(2000)
         eventEmitter.emit('done', { no: payload.no })
       });
       await page.evaluate(() => {
@@ -689,7 +691,7 @@ const completeRegister = async (payload) => {
     console.log(e)
   }
 }
-const startAccAutoCreate = async (id, no, tagId) => {
+const startAccAutoCreate = async (id, no, tagId, proxyId) => {
   tag = tagId
   if (!no || no < 1) return
   var mail = await Mails.findById(id)
@@ -709,6 +711,29 @@ const startAccAutoCreate = async (id, no, tagId) => {
   startImap(mail.user, eventEmitter)
 }
 
+const addAccSkills = async (skillIds, id) => {
+  const { page, browser } = await startBrowser(id);
+  await doLogin(page, id);
+  await page.goto('https://crowdworks.jp/user_skills', { timeout: 60000 });
+  var url = await page.evaluate(() => document.location.href);
+  if (url.indexOf(`user_skills`) < 0) return await browser.close();
+
+  var skills = await Skills.find({ _id: { $in: skillIds } })
+  for (const skill of skills) {
+    console.log(skill)
+    await page.evaluate((data) => {
+      console.log(data)
+      document.querySelector('#user_skill_name').value = data.skill.skill;
+      document.querySelector("#user_skill_level").value = "5"
+      document.querySelector("#user_skill_years").value = "5"
+      const btn = document.querySelector('.cw-button.cw-button_action.submit'); btn.click();
+    }, { skill });
+    await delay(1000);
+  }
+
+  await browser.close();
+}
+
 const startLocalAccount = async (proxy, auth, chrome) => {
   var params = {
     headless: false,
@@ -719,4 +744,4 @@ const startLocalAccount = async (proxy, auth, chrome) => {
   const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
   doLoginWithAuth(page, auth);
 }
-module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages, startAccAutoCreate }
+module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages, startAccAutoCreate, addAccSkills }
