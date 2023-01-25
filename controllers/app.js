@@ -187,7 +187,8 @@ const getAccounts = async (req, res) => {
       }, {});
     };
     const { contract } = req.body
-    var accounts = await Accounts.find({}, 'username blocked client imgPath tag tagId').populate('tagId');
+    var accounts = await Accounts.find({ $or: [{ deleted: false }, { deleted: null }] },
+      'username blocked client imgPath tag tagId').populate('tagId');
     if (contract) {
       var contracts = await Contracts.find()
       var wcontracts = groupBy(contracts, 'workerId')
@@ -265,6 +266,16 @@ const makeBlocked = async (req, res) => {
   try {
     var { id } = req.params
     await Accounts.findByIdAndUpdate(id, { blocked: true })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const deleteAcc = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { deleted: true })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -828,5 +839,6 @@ module.exports = {
   updateTag,
   removeTag,
   addSkill,
-  deleteSkill
+  deleteSkill,
+  deleteAcc
 }

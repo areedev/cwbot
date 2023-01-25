@@ -10,6 +10,7 @@ var schema = mongoose.Schema({
   tagId: { type: mongoose.Types.ObjectId, ref: 'tags', default: null },
   status: { type: String, default: 'stopped' },
   blocked: { type: Boolean, default: false },
+  deleted: { type: Boolean, default: false },
   client: { type: Boolean, default: false },
   cwid: { type: String, default: '' },
   imgPath: { type: String, default: '' },
