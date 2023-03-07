@@ -107,7 +107,7 @@ const once = async (req, res) => {
     var { pages, delay } = req.body
 
     const account = await Accounts.findById(id);
-    if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
+    // if (account?.blocked === true) return res.json({ success: false, error: 'Blocked account.' })
     if (delay != 0) console.log('Delaying ' + delay + ' minutes...')
     setTimeout(() => bot(id, pages), delay * 60 * 1000)
     res.status(200).send('success')
@@ -266,6 +266,16 @@ const makeBlocked = async (req, res) => {
   try {
     var { id } = req.params
     await Accounts.findByIdAndUpdate(id, { blocked: true })
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.status(400).json({ error: e.message })
+  }
+}
+const makeUnblocked = async (req, res) => {
+  try {
+    var { id } = req.params
+    await Accounts.findByIdAndUpdate(id, { blocked: false })
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -817,6 +827,7 @@ module.exports = {
   saveTag,
   setAuto,
   makeBlocked,
+  makeUnblocked,
   saveBids,
   getPublicSettings,
   markManualLink,

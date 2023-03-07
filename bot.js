@@ -740,7 +740,7 @@ const startLocalAccount = async (proxy, auth, chrome) => {
     defaultViewport: null
   }
   var args = ['--start-maximized']
-  var executablePath = chrome ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : ''
+  var executablePath = chrome ? 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe' : ''
   const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
   doLoginWithAuth(page, auth);
 }

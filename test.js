@@ -32,7 +32,7 @@ const fun = async () => {
   // const browser = await puppeteer.launch({ ...params, args, executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' });
   // startImap('omnisuperadm1@gmail.com', 1)
 
-  startAccAutoCreate('', 1)
+  // startAccAutoCreate('', 1)
 
 }
 
