@@ -48,6 +48,8 @@ router.post('/api/admin/jobs', app.addJob)
 router.post('/api/admin/tags', app.addTag)
 router.post('/api/admin/tags/edit/:id', app.updateTag)
 router.delete('/api/admin/tags/:id', app.removeTag)
+
+router.post('/api/admin/upwork', app.createUpworkAcc)
 // router.post('/api/admin/settings/dictionary/word/edit', app.editWord)
 
 router.post('/webhook', app.firstpromoterWebhook)

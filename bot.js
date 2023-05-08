@@ -12,6 +12,7 @@ const Mails = require('./db/mails');
 const Skills = require('./db/skills');
 var userAgent = require('user-agents');
 const { startImap, closeImap } = require('./controllers/imap');
+const Proxies = require('./db/proxies');
 
 const eventEmitter = new EventEmitter();
 var tag = ''
@@ -691,13 +692,186 @@ const completeRegister = async (payload) => {
     console.log(e)
   }
 }
-const startAccAutoCreate = async (id, no, tagId, proxyId) => {
+const createUpwork = async (username, password, upproxyId) => {
+  var params = {
+    headless: false,
+    defaultViewport: null
+  }
+  var proxy = await Proxies.findById(upproxyId)
+  var args = ['--start-maximized']
+  var executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+  if (proxy) {
+    args.push(`--proxy-server=${proxy.type}://${proxy.ip}:${proxy.port}`)
+    console.log(`Opening browser using proxy ${proxy.type}://${proxy.ip}:${proxy.port}...`)
+  } else {
+    console.log(`Opening browser without proxy...`)
+  }
+  var browser = await puppeteer.launch({ ...params, args, executablePath });
+  var page = await browser.newPage();
+  if (proxy)
+    await page.authenticate({ username: proxy.username, password: proxy.password })
+
+  // const setLoginCredentials = async (page, selector1, value1, selector2, value2) => {
+  //   await page.waitForSelector(selector1);
+  //   await page.click(selector1);
+  //   await page.evaluate((data) => {
+  //     return document.querySelector(data.selector).value = data.value;
+  //   }, { selector: selector1, value: value1 })
+  //   await page.click(selector2);
+  //   await page.evaluate((data) => {
+  //     return document.querySelector(data.selector).value = data.value;
+  //   }, { selector: selector2, value: value2 })
+  // }
+  await page.goto("https://www.upwork.com/ab/account-security/login", { timeout: 60000 });
+  console.log(username)
+  await page.waitForSelector('#login_username');
+  await page.click('#login_username')
+  page.keyboard.type(username);
+  await delay(1000)
+  await page.evaluate(() => {
+    document.querySelector("#login_password_continue").click()
+  })
+  await delay(1000)
+  await page.waitForSelector('#login_password');
+  await page.click('#login_password')
+  page.keyboard.type(password);
+  await delay(1000)
+  await page.evaluate(() => {
+    document.querySelector("#login_control_continue").click()
+  })
+  /*
+    // var url = await page.evaluate(() => document.location.href);
+    // console.log(url)
+    // if (url.indexOf('nx/create-profile/welcome') >= 0) {
+    await page.waitForSelector(".fe-step.fe-modern-step button")
+    await page.evaluate(() => {
+      document.querySelector(".fe-step.fe-modern-step button").click()
+    })
+    // }
+  
+    // url = await page.evaluate(() => document.location.href);
+    // console.log(url)
+    // if (url.indexOf('nx/create-profile/experience') >= 0) {
+    await page.waitForSelector("input[type='radio']:first-child")
+    await page.evaluate(() => {
+      document.querySelector("input[type='radio']:first-child").click()
+    })
+    // }
+  
+    // url = await page.evaluate(() => document.location.href);
+    // console.log(url)
+    // if (url.indexOf('nx/create-profile/goal') >= 0) {
+    // await page.waitForSelector("input[type='radio']:first-child")
+    // await page.evaluate(() => {
+    //   document.querySelector("input[type='radio']:first-child").click()
+    // })
+    // }
+  
+    // url = await page.evaluate(() => document.location.href);
+    // console.log(url)
+    // if (url.indexOf('nx/create-profile/work-preference') >= 0) {
+    await delay(1000)
+    await page.waitForSelector(".fe-modern-step-footer button.air3-btn-link")
+    await page.evaluate(() => {
+      document.querySelector(".fe-modern-step-footer button.air3-btn-link").click()
+    })
+  
+    await delay(1000)
+    await page.waitForSelector(".fe-modern-step-footer button.air3-btn-link")
+    await page.evaluate(() => {
+      document.querySelector(".fe-modern-step-footer button.air3-btn-link").click()
+    })
+  
+    await delay(1000)
+    await page.waitForSelector(".step-container-content .air3-grid-container button:nth-child(3)")
+    await page.evaluate(() => {
+      document.querySelector(".step-container-content .air3-grid-container button:nth-child(3)").click()
+    })
+  
+    await delay(1000)
+    await page.waitForSelector("input[type='file']")
+    // await page.evaluate(() => {
+    //   document.querySelector("input[type='file']").uploadFile("E:\\Data\\CV-1.pdf")
+    // })
+  
+    async function chooseCv() {
+  
+      const [fileChooser] = await Promise.all([
+        page.waitForFileChooser(),
+        page.evaluate(() => document.querySelector(".text-body-sm a").click())
+      ]);
+      await fileChooser.accept(['E:\\Data\\CV-1.pdf']);
+    }
+    await chooseCv()
+    await delay(1000)
+    await page.waitForSelector(".doc-file-icon.mr-3.mr-md-5.air3-icon.md")
+    await page.evaluate(() => {
+      document.querySelector("button.air3-btn.air3-btn-primary.mb-0").click()
+    })
+  
+    await delay(1000)
+    await page.waitForSelector("input.air3-input.form-control")
+    await page.evaluate(() => {
+      document.querySelector("input.air3-input.form-control").value = ""
+      document.querySelector("input.air3-input.form-control").click()
+      page.keyboard.type('Senior FullStack Developer');
+    })
+  
+    await delay(1000)
+    await page.evaluate(() => {
+      document.querySelector("button.air3-btn.mb-0.mr-0.air3-btn-primary").click()
+    })
+    
+    await delay(1000)
+    await page.evaluate(() => {
+      document.querySelector("button.air3-btn.mb-0.mr-0.air3-btn-primary").click()
+    })
+    // }
+  */
+  // url = await page.evaluate(() => document.location.href);
+  // console.log(url)
+  // if (url.indexOf('nx/create-profile/resume-import') >= 0) {
+  console.log("Ok")
+  
+  // await page.waitForSelector("input");
+  // await delay(10000);
+  // await page.click("input");
+  // await page.focus("input");
+  // console.log("click")
+  // await delay(1000);
+  // await page.keyboard.type("React");
+  // console.log("type")
+  // await delay(1000);
+  // page.click("#typeahead-input-control-390 li:first-child")
+  // (async function (page) {
+  //   const skills = ["React", "Node.js", "Next.js", "TypeScript", "Vue.js", "Nuxt.js", "GraphQL", "Python", "Django", "PHP", "Laravel", "DevOps", "Docker", "Flutter", "React Native"]
+  //   for (let i = 0; i < skills.length; i++) {
+  //     // addSkill(page, skills[i]);
+  //     await page.click("input[type='search']");
+  //     page.keyboard.type(skills[i]);
+  //     page.evaluate(() => {
+  //       document.querySelector("#typeahead-input-control-390 li:first-child").click()
+  //     })
+  //   }
+  // })(page);
+
+  // await delay(1000)
+  // await page.evaluate(() => {
+  //   document.querySelector("button.air3-btn.mb-0.mr-0.air3-btn-primary").click()
+  // })
+  // await page.evaluate(() => {
+  //   document.querySelector(".fe-modern-step-footer button[data-test='step-skip-button']").click()
+  // })
+  // }
+  // await setLoginCredentials(page, '#username', username, '#password', password)
+}
+const startAccAutoCreate = async (id, no, tagId, proxyId, upwork) => {
   tag = tagId
   if (!no || no < 1) return
   var mail = await Mails.findById(id)
   eventEmitter.on('imapstarted', (payload) => {
     console.log('Imap started')
-    createAcc(mail.user, mail.no + 1)
+    createAcc(mail.user, mail.no + 1, upwork)
   })
   eventEmitter.on('newmail', completeRegister)
   eventEmitter.on('done', (payload) => {
@@ -744,4 +918,4 @@ const startLocalAccount = async (proxy, auth, chrome) => {
   const { page, browser } = await startBrowserWithProxy(proxy, params, args, executablePath);
   doLoginWithAuth(page, auth);
 }
-module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages, startAccAutoCreate, addAccSkills }
+module.exports = { bot, doCertain, delay, contractActions, startLocalAccount, sendSimpleMessages, startAccAutoCreate, addAccSkills, createUpwork }

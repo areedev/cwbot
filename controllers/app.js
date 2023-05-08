@@ -4,7 +4,7 @@ var Visits = require('../db/visits')
 var Settings = require('../db/settings')
 var Accounts = require('../db/accounts')
 var Users = require('../db/user')
-const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages, startAccAutoCreate, addAccSkills } = require('../bot')
+const { bot, doCertain, delay, startLocalAccount, contractActions, sendSimpleMessages, startAccAutoCreate, addAccSkills, createUpwork } = require('../bot')
 const moment = require('moment')
 const jwt = require('jwt-simple')
 
@@ -650,8 +650,21 @@ const removeProxy = async (req, res) => {
 const startAutoCreate = async (req, res) => {
   try {
     const { id } = req.params
-    var { no, tagId, proxyId } = req.body;
+    var { no, tagId, proxyId, upwork } = req.body;
+    // if (upwork) createUpwork(id, no, proxyId)
     startAccAutoCreate(id, no, tagId, proxyId)
+    res.json({ success: true })
+  } catch (e) {
+    console.log(e)
+    res.json({ success: false, error: e.message })
+  }
+}
+
+const createUpworkAcc = async (req, res) => {
+  try {
+    var { username, password, upproxyId } = req.body;
+    console.log(username, password, upproxyId)
+    createUpwork(username, password, upproxyId)
     res.json({ success: true })
   } catch (e) {
     console.log(e)
@@ -851,5 +864,6 @@ module.exports = {
   removeTag,
   addSkill,
   deleteSkill,
-  deleteAcc
+  deleteAcc,
+  createUpworkAcc
 }

@@ -9,8 +9,8 @@ mongoose.connect(dbConfig.DB_URL, { useNewUrlParser: true, useUnifiedTopology: t
     username: 'admin',
     password: '123123123'
   }]
-  // await Users.collection.deleteMany();
-  // await Users.collection.insertMany(users);
+  await Users.collection.deleteMany();
+  await Users.collection.insertMany(users);
 
   var emails = [
     { user: 'omnisuperadm1@gmail.com', password: 'lswonxivivcofkio', host: 'imap.gmail.com', no: 0 },
