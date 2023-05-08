@@ -169,6 +169,7 @@ const sendProp = async (page, jobId, id, bid, bidtype = 'none', budget = 0, forc
   try {
     if (!visited) {
       await page.goto(link);
+      await delay(2000)
       var url = await page.evaluate(() => document.location.href);
       console.log(url)
       if (url.indexOf('contracts/') > -1) {
