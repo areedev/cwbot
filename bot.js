@@ -113,7 +113,7 @@ const doLoginWithAuth = async (page, auth) => {
     // await page.$eval('#username', el => el.value = username);
     // await page.$eval('#password', el => el.value = password);
     await delay(3000);
-    await page.$eval('.button-login', el => el.click());
+    await page.$eval("button[type='submit']", el => el.click());
     await delay(3000);
     return { res: 'success', err: '' }
   } catch (e) {
