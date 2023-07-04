@@ -407,6 +407,18 @@ const startManual = async (req, res) => {
     res.json({ success: false });
   }
 }
+const stopManual = async (req, res) => {
+  try {
+    var setting = await Settings.findOne({type: 'manual'})
+    if (setting.sentence == 'running') {
+      setting.sentence = 'stopped'
+      await setting.save()
+    }
+    res.json({success: true})
+  } catch (e) {
+    res.json({ success: false });
+  }
+}
 const doAllBid = async () => {
   const accounts = await Accounts.find()
   console.log('here')
@@ -570,7 +582,8 @@ const getPublicSettings = async (req, res) => {
     var words = await Words.find().sort([['createdAt', -1]]);
     var mails = await Mails.find({}, 'user no');
     var tags = await Tags.find();
-    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, skills, words, categories, mails, tags } })
+    var manualRunning = await Settings.findOne({type: 'manual'})
+    res.json({ success: true, result: { proxies, badClients, manualLinks, keywords, skills, words, categories, mails, tags, manualRunning: manualRunning.sentence } })
   } catch (e) {
     console.log(e)
     res.json({ success: false })
@@ -865,5 +878,6 @@ module.exports = {
   addSkill,
   deleteSkill,
   deleteAcc,
+  stopManual,
   createUpworkAcc
 }
